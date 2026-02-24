@@ -2,6 +2,8 @@ package com.revpay.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.revpay.model.enums.*;
 import jakarta.persistence.*;
 
 @Entity
@@ -29,17 +31,20 @@ public class User {
     @Column(name = "TRANSACTION_PIN_HASH")
     private String transactionPinHash;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "USER_TYPE")
-    private String userType;
+    private UserType userType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
-    private String status;
+    private UserStatus status;
 
     @Column(name = "FAILED_ATTEMPTS")
     private Integer failedAttempts;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "IS_LOCKED")
-    private String isLocked;
+    private YesNoStatus isLocked;
 
     @Column(name = "LAST_LOGIN")
     private LocalDateTime lastLogin;
@@ -65,9 +70,9 @@ public class User {
     // ===== PARAMETERIZED CONSTRUCTOR (All fields) =====
     public User(Long userId, String fullName, String email, String phone,
                 String passwordHash, String transactionPinHash,
-                String userType, String status, Integer failedAttempts,
-                String isLocked, LocalDateTime lastLogin,
-                LocalDateTime createdAt) {
+                UserType userType, UserStatus status,
+                Integer failedAttempts, YesNoStatus isLocked,
+                LocalDateTime lastLogin, LocalDateTime createdAt) {
 
         this.userId = userId;
         this.fullName = fullName;
@@ -103,17 +108,17 @@ public class User {
     public String getTransactionPinHash() { return transactionPinHash; }
     public void setTransactionPinHash(String transactionPinHash) { this.transactionPinHash = transactionPinHash; }
 
-    public String getUserType() { return userType; }
-    public void setUserType(String userType) { this.userType = userType; }
+    public UserType getUserType() { return userType; }
+    public void setUserType(UserType  userType) { this.userType = userType; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public UserStatus getStatus() { return status; }
+    public void setStatus(UserStatus status) { this.status = status; }
 
     public Integer getFailedAttempts() { return failedAttempts; }
     public void setFailedAttempts(Integer failedAttempts) { this.failedAttempts = failedAttempts; }
 
-    public String getIsLocked() { return isLocked; }
-    public void setIsLocked(String isLocked) { this.isLocked = isLocked; }
+    public YesNoStatus getIsLocked() { return isLocked; }
+    public void setIsLocked(YesNoStatus isLocked) { this.isLocked = isLocked; }
 
     public LocalDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }

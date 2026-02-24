@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -27,14 +28,15 @@ public class BusinessProfile {
     @Column(name = "ADDRESS")
     private String address;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "VERIFIED")
-    private String verified;
+    private YesNoStatus verified;
 
     public BusinessProfile() {}
 
     public BusinessProfile(Long businessId, User user, String businessName,
                            String businessType, String panNumber,
-                           String address, String verified) {
+                           String address, YesNoStatus verified){
         this.businessId = businessId;
         this.user = user;
         this.businessName = businessName;
@@ -62,6 +64,6 @@ public class BusinessProfile {
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
-    public String getVerified() { return verified; }
-    public void setVerified(String verified) { this.verified = verified; }
+    public YesNoStatus getVerified() { return verified; }
+    public void setVerified(YesNoStatus verified) { this.verified = verified; }
 }

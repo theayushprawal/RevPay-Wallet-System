@@ -1,6 +1,8 @@
 package com.revpay.model;
 
 import java.time.LocalDate;
+
+import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -38,8 +40,9 @@ public class PaymentMethod {
     @Column(name = "EXPIRY_DATE")
     private LocalDate expiryDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "IS_DEFAULT")
-    private String isDefault;
+    private YesNoStatus isDefault;
 
     @Column(name = "IFSC_CODE")
     private String ifscCode;
@@ -50,7 +53,7 @@ public class PaymentMethod {
                          String detailsEnc, String paymentName,
                          String cvv, String billingAddress,
                          String last4, LocalDate expiryDate,
-                         String isDefault, String ifscCode) {
+                         YesNoStatus isDefault, String ifscCode) {
         this.pmId = pmId;
         this.user = user;
         this.methodType = methodType;
@@ -91,8 +94,8 @@ public class PaymentMethod {
     public LocalDate getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
-    public String getIsDefault() { return isDefault; }
-    public void setIsDefault(String isDefault) { this.isDefault = isDefault; }
+    public YesNoStatus getIsDefault() { return isDefault; }
+    public void setIsDefault(YesNoStatus isDefault) { this.isDefault = isDefault; }
 
     public String getIfscCode() { return ifscCode; }
     public void setIfscCode(String ifscCode) { this.ifscCode = ifscCode; }

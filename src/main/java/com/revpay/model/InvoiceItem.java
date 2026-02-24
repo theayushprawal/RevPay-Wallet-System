@@ -2,6 +2,8 @@ package com.revpay.model;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "INVOICE_ITEMS")
 public class InvoiceItem {
@@ -23,13 +25,13 @@ public class InvoiceItem {
     private Integer quantity;
 
     @Column(name = "PRICE")
-    private Double price;
+    private BigDecimal price;
 
     public InvoiceItem() {}
 
     public InvoiceItem(Long itemId, Invoice invoice,
                        String itemName, Integer quantity,
-                       Double price) {
+                       BigDecimal price) {
         this.itemId = itemId;
         this.invoice = invoice;
         this.itemName = itemName;
@@ -49,6 +51,6 @@ public class InvoiceItem {
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public Double getPrice() { return price; }
-    public void setPrice(Double price) { this.price = price; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 }

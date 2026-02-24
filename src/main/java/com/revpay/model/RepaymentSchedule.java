@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
@@ -18,10 +19,10 @@ public class RepaymentSchedule {
     private Loan loan;
 
     @Column(name = "BALANCE_PAYMENT")
-    private Double balancePayment;
+    private BigDecimal balancePayment;
 
     @Column(name = "EMI")
-    private Double emi;
+    private BigDecimal emi;
 
     @Column(name = "PAYMENT_DATE")
     private LocalDateTime paymentDate;
@@ -35,7 +36,7 @@ public class RepaymentSchedule {
     public RepaymentSchedule() {}
 
     public RepaymentSchedule(Long repaymentId, Loan loan,
-                             Double balancePayment, Double emi,
+                             BigDecimal balancePayment, BigDecimal emi,
                              LocalDateTime paymentDate,
                              String status, String remarks) {
         this.repaymentId = repaymentId;
@@ -53,11 +54,11 @@ public class RepaymentSchedule {
     public Loan getLoan() { return loan; }
     public void setLoan(Loan loan) { this.loan = loan; }
 
-    public Double getBalancePayment() { return balancePayment; }
-    public void setBalancePayment(Double balancePayment) { this.balancePayment = balancePayment; }
+    public BigDecimal getBalancePayment() { return balancePayment; }
+    public void setBalancePayment(BigDecimal balancePayment) { this.balancePayment = balancePayment; }
 
-    public Double getEmi() { return emi; }
-    public void setEmi(Double emi) { this.emi = emi; }
+    public BigDecimal getEmi() { return emi; }
+    public void setEmi(BigDecimal emi) { this.emi = emi; }
 
     public LocalDateTime getPaymentDate() { return paymentDate; }
     public void setPaymentDate(LocalDateTime paymentDate) { this.paymentDate = paymentDate; }

@@ -1,6 +1,9 @@
 package com.revpay.model;
 
 import java.time.LocalDateTime;
+
+import com.revpay.model.enums.NotificationType;
+import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -20,11 +23,13 @@ public class Notification {
     @Column(name = "MESSAGE")
     private String message;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TYPE")
-    private String type;
+    private NotificationType type;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "IS_READ")
-    private String isRead;
+    private YesNoStatus isRead;
 
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
@@ -32,8 +37,8 @@ public class Notification {
     public Notification() {}
 
     public Notification(Long notificationId, User user,
-                        String message, String type,
-                        String isRead, LocalDateTime createdAt) {
+                        String message, NotificationType type,
+                        YesNoStatus isRead, LocalDateTime createdAt) {
         this.notificationId = notificationId;
         this.user = user;
         this.message = message;
@@ -51,11 +56,11 @@ public class Notification {
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public NotificationType getType() { return type; }
+    public void setType(NotificationType type) { this.type = type; }
 
-    public String getIsRead() { return isRead; }
-    public void setIsRead(String isRead) { this.isRead = isRead; }
+    public YesNoStatus getIsRead() { return isRead; }
+    public void setIsRead(YesNoStatus isRead) { this.isRead = isRead; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

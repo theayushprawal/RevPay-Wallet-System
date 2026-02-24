@@ -1,6 +1,10 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.revpay.model.enums.TransactionStatus;
+import com.revpay.model.enums.TransactionType;
 import jakarta.persistence.*;
 
 @Entity
@@ -22,13 +26,15 @@ public class Transaction {
     private User receiver;
 
     @Column(name = "AMOUNT")
-    private Double amount;
+    private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TXN_TYPE")
-    private String txnType;
+    private TransactionType txnType;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
-    private String status;
+    private TransactionStatus status;
 
     @Column(name = "REMARKS")
     private String remarks;
@@ -39,8 +45,8 @@ public class Transaction {
     public Transaction() {}
 
     public Transaction(Long txnId, User sender, User receiver,
-                       Double amount, String txnType,
-                       String status, String remarks,
+                       BigDecimal amount, TransactionType txnType,
+                       TransactionStatus status, String remarks,
                        LocalDateTime txnDate) {
         this.txnId = txnId;
         this.sender = sender;
@@ -61,14 +67,14 @@ public class Transaction {
     public User getReceiver() { return receiver; }
     public void setReceiver(User receiver) { this.receiver = receiver; }
 
-    public Double getAmount() { return amount; }
-    public void setAmount(Double amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public String getTxnType() { return txnType; }
-    public void setTxnType(String txnType) { this.txnType = txnType; }
+    public TransactionType getTxnType() { return txnType; }
+    public void setTxnType(TransactionType txnType) { this.txnType = txnType; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public TransactionStatus getStatus() { return status; }
+    public void setStatus(TransactionStatus status) { this.status = status; }
 
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }

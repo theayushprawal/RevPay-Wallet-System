@@ -1,7 +1,10 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.revpay.model.enums.LoanStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,13 +22,13 @@ public class Loan {
     private User business;
 
     @Column(name = "AMOUNT")
-    private Double amount;
+    private BigDecimal amount;
 
     @Column(name = "EMI")
-    private Double emi;
+    private BigDecimal emi;
 
     @Column(name = "INTEREST_RATE")
-    private Double interestRate;
+    private BigDecimal interestRate;
 
     @Column(name = "TENURE_MONTHS")
     private Integer tenureMonths;
@@ -33,21 +36,22 @@ public class Loan {
     @Column(name = "PURPOSE")
     private String purpose;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
-    private String status;
+    private LoanStatus status;
 
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RepaymentSchedule> repayments;
 
     public Loan() {}
 
-    public Loan(Long loanId, User business, Double amount,
-                Double emi, Double interestRate,
+    public Loan(Long loanId, User business, BigDecimal amount,
+                BigDecimal emi, BigDecimal interestRate,
                 Integer tenureMonths, String purpose,
-                String status, LocalDateTime createdAt) {
+                LoanStatus status, LocalDateTime createdAt) {
         this.loanId = loanId;
         this.business = business;
         this.amount = amount;
@@ -65,14 +69,14 @@ public class Loan {
     public User getBusiness() { return business; }
     public void setBusiness(User business) { this.business = business; }
 
-    public Double getAmount() { return amount; }
-    public void setAmount(Double amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public Double getEmi() { return emi; }
-    public void setEmi(Double emi) { this.emi = emi; }
+    public BigDecimal getEmi() { return emi; }
+    public void setEmi(BigDecimal emi) { this.emi = emi; }
 
-    public Double getInterestRate() { return interestRate; }
-    public void setInterestRate(Double interestRate) { this.interestRate = interestRate; }
+    public BigDecimal getInterestRate() { return interestRate; }
+    public void setInterestRate(BigDecimal interestRate) { this.interestRate = interestRate; }
 
     public Integer getTenureMonths() { return tenureMonths; }
     public void setTenureMonths(Integer tenureMonths) { this.tenureMonths = tenureMonths; }
@@ -80,8 +84,8 @@ public class Loan {
     public String getPurpose() { return purpose; }
     public void setPurpose(String purpose) { this.purpose = purpose; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public LoanStatus getStatus() { return status; }
+    public void setStatus(LoanStatus status) { this.status = status; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
