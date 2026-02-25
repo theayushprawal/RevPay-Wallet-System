@@ -1,8 +1,11 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.revpay.model.enums.InvoiceStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -26,10 +29,11 @@ public class Invoice {
     private String customerName;
 
     @Column(name = "TOTAL_AMOUNT")
-    private Double totalAmount;
+    private BigDecimal totalAmount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
-    private String status;
+    private InvoiceStatus status;
 
     @Column(name = "DUE_DATE")
     private LocalDate dueDate;
@@ -37,14 +41,14 @@ public class Invoice {
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InvoiceItem> items;
 
     public Invoice() {}
 
     public Invoice(Long invoiceId, User business, Long customerId,
-                   String customerName, Double totalAmount,
-                   String status, LocalDate dueDate,
+                   String customerName, BigDecimal totalAmount,
+                   InvoiceStatus status, LocalDate dueDate,
                    LocalDateTime createdAt) {
         this.invoiceId = invoiceId;
         this.business = business;
@@ -68,11 +72,11 @@ public class Invoice {
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
 
-    public Double getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(Double totalAmount) { this.totalAmount = totalAmount; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public InvoiceStatus getStatus() { return status; }
+    public void setStatus(InvoiceStatus status) { this.status = status; }
 
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }

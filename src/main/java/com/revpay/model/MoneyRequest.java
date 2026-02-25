@@ -1,6 +1,9 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.revpay.model.enums.RequestStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -22,10 +25,11 @@ public class MoneyRequest {
     private User receiver;
 
     @Column(name = "AMOUNT")
-    private Double amount;
+    private BigDecimal amount;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
-    private String status;
+    private RequestStatus status;
 
     @Column(name = "EXPIRY_DATE")
     private LocalDateTime expiryDate;
@@ -39,7 +43,7 @@ public class MoneyRequest {
     public MoneyRequest() {}
 
     public MoneyRequest(Long requestId, User sender, User receiver,
-                        Double amount, String status,
+                        BigDecimal amount, RequestStatus status,
                         LocalDateTime expiryDate,
                         String rejectionReason,
                         LocalDateTime createdAt) {
@@ -62,11 +66,11 @@ public class MoneyRequest {
     public User getReceiver() { return receiver; }
     public void setReceiver(User receiver) { this.receiver = receiver; }
 
-    public Double getAmount() { return amount; }
-    public void setAmount(Double amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public RequestStatus getStatus() { return status; }
+    public void setStatus(RequestStatus status) { this.status = status; }
 
     public LocalDateTime getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }

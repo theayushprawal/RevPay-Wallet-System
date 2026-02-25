@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
@@ -18,14 +19,14 @@ public class Wallet {
     private User user;
 
     @Column(name = "BALANCE")
-    private Double balance;
+    private BigDecimal balance;
 
     @Column(name = "LAST_UPDATED")
     private LocalDateTime lastUpdated;
 
     public Wallet() {}
 
-    public Wallet(Long walletId, User user, Double balance, LocalDateTime lastUpdated) {
+    public Wallet(Long walletId, User user, BigDecimal balance, LocalDateTime lastUpdated) {
         this.walletId = walletId;
         this.user = user;
         this.balance = balance;
@@ -38,8 +39,8 @@ public class Wallet {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
-    public Double getBalance() { return balance; }
-    public void setBalance(Double balance) { this.balance = balance; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
     public LocalDateTime getLastUpdated() { return lastUpdated; }
     public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
