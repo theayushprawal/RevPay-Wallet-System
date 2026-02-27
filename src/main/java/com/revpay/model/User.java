@@ -61,8 +61,8 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<PaymentMethod> paymentMethods;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<SecurityQuestion> securityQuestions;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private SecurityQuestion securityQuestion;
 
     // ===== DEFAULT CONSTRUCTOR (Required by JPA) =====
     public User() {}
@@ -135,6 +135,6 @@ public class User {
     public List<PaymentMethod> getPaymentMethods() { return paymentMethods; }
     public void setPaymentMethods(List<PaymentMethod> paymentMethods) { this.paymentMethods = paymentMethods; }
 
-    public List<SecurityQuestion> getSecurityQuestions() { return securityQuestions; }
-    public void setSecurityQuestions(List<SecurityQuestion> securityQuestions) { this.securityQuestions = securityQuestions; }
+    public SecurityQuestion getSecurityQuestion() { return securityQuestion;}
+    public void setSecurityQuestion(SecurityQuestion securityQuestion) { this.securityQuestion = securityQuestion;}
 }

@@ -1,5 +1,6 @@
 package com.revpay.service.impl;
 
+import com.revpay.dto.SecurityQuestionRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -99,16 +100,14 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // Save Security Questions
-        if (request.getSecurityQuestions() != null) {
-            for (var sq : request.getSecurityQuestions()) {
+        SecurityQuestionRequest sq = request.getSecurityQuestion();
+        if (sq != null) {
+            SecurityQuestion question = new SecurityQuestion();
+            question.setUser(user);
+            question.setQuestion(sq.getQuestion());
+            question.setAnswerHash(passwordEncoder.encode(sq.getAnswer()));
 
-                SecurityQuestion question = new SecurityQuestion();
-                question.setUser(user);
-                question.setQuestion(sq.getQuestion());
-                question.setAnswerHash(passwordEncoder.encode(sq.getAnswer()));
-
-                securityQuestionRepository.save(question);
-            }
+            securityQuestionRepository.save(question);
         }
     }
 
@@ -177,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
         // Update password
         user.setPasswordHash(newHashedPassword);
 
-        // (Optional but good practice)
+        // Update last login time
         user.setLastLogin(LocalDateTime.now());
 
         // Save user
