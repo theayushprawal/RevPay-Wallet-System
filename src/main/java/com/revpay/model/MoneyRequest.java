@@ -34,8 +34,8 @@ public class MoneyRequest {
     @Column(name = "EXPIRY_DATE")
     private LocalDateTime expiryDate;
 
-    @Column(name = "REJECTION_REASON")
-    private String rejectionReason;
+    @Column(name = "REMARKS")
+    private String remarks;
 
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
@@ -45,7 +45,7 @@ public class MoneyRequest {
     public MoneyRequest(Long requestId, User sender, User receiver,
                         BigDecimal amount, RequestStatus status,
                         LocalDateTime expiryDate,
-                        String rejectionReason,
+                        String remarks,
                         LocalDateTime createdAt) {
         this.requestId = requestId;
         this.sender = sender;
@@ -53,7 +53,7 @@ public class MoneyRequest {
         this.amount = amount;
         this.status = status;
         this.expiryDate = expiryDate;
-        this.rejectionReason = rejectionReason;
+        this.remarks = remarks;
         this.createdAt = createdAt;
     }
 
@@ -75,8 +75,8 @@ public class MoneyRequest {
     public LocalDateTime getExpiryDate() { return expiryDate; }
     public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
 
-    public String getRejectionReason() { return rejectionReason; }
-    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
