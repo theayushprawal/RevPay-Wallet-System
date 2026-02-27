@@ -1,8 +1,14 @@
 package com.revpay.repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.revpay.model.Transaction;
@@ -28,4 +34,37 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findBySenderAndStatus(User sender, TransactionStatus status);
 
     List<Transaction> findByReceiverAndStatus(User receiver, TransactionStatus status);
+
+    @Query("""
+    SELECT t
+    FROM Transaction t
+    WHERE
+        (t.sender.userId = :userId OR t.receiver.userId = :userId)
+
+    AND (:txnType IS NULL OR t.txnType = :txnType)
+    AND (:status IS NULL OR t.status = :status)
+
+    AND (:startDate IS NULL OR t.txnDate >= :startDate)
+    AND (:endDate IS NULL OR t.txnDate <= :endDate)
+
+    AND (:minAmount IS NULL OR t.amount >= :minAmount)
+    AND (:maxAmount IS NULL OR t.amount <= :maxAmount)
+
+    AND (
+          :searchTerm IS NULL
+          OR LOWER(t.sender.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+          OR LOWER(t.receiver.fullName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+          OR CAST(t.txnId AS string) LIKE CONCAT('%', :searchTerm, '%')
+    )""")
+    Page<Transaction> filterTransactionsPaged(
+            @Param("userId") Long userId,
+            @Param("txnType") TransactionType txnType,
+            @Param("status") TransactionStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            @Param("minAmount") BigDecimal minAmount,
+            @Param("maxAmount") BigDecimal maxAmount,
+            @Param("searchTerm") String searchTerm,
+            Pageable pageable
+    );
 }

@@ -3,7 +3,9 @@ package com.revpay.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.model.Transaction;
+import org.springframework.data.domain.Page;
 
 public interface TransactionService {
 
@@ -21,4 +23,11 @@ public interface TransactionService {
      * (sent + received).
      */
     List<Transaction> getTransactionsForUser(Long userId);
+
+
+    Page<Transaction> filterTransactionsPaged(
+            TransactionFilterRequest request,
+            int page,
+            int size
+    );
 }

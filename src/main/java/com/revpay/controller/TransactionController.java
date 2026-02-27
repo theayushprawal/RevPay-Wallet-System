@@ -3,7 +3,9 @@ package com.revpay.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.revpay.dto.TransactionFilterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,5 +56,20 @@ public class TransactionController {
                 transactionService.getTransactionsForUser(userId);
 
         return ResponseEntity.ok(transactions);
+    }
+
+    /**
+     * FILTER + PAGINATED HIST
+     */
+    @PostMapping("/filter/paged")
+    public ResponseEntity<Page<Transaction>> filterTransactionsPaged(
+            @RequestBody TransactionFilterRequest request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        Page<Transaction> result =
+                transactionService.filterTransactionsPaged(request, page, size);
+
+        return ResponseEntity.ok(result);
     }
 }

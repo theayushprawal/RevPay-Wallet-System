@@ -5,11 +5,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.model.User;
 import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -120,6 +125,7 @@ public class TransactionServiceImpl implements TransactionService {
         transactionRepository.save(receiverTxn);
     }
 
+    // Fetches all the user transaction
     @Override
     public List<Transaction> getTransactionsForUser(Long userId) {
 
@@ -146,5 +152,47 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         return allTransactions;
+    }
+
+    // Helper method for above method
+    private String normalizeSearchTerm(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return null;
+        }
+        return searchTerm.trim();
+    }
+
+    // Pagination for Filtered Records
+    @Override
+    public Page<Transaction> filterTransactionsPaged(
+            TransactionFilterRequest request,
+            int page,
+            int size) {
+
+        if (request.getUserId() == null) {
+            throw new IllegalArgumentException("UserId is required for transaction filtering");
+        }
+
+        if (page < 0 || size <= 0) {
+            throw new IllegalArgumentException("Invalid pagination parameters");
+        }
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("txnDate").descending()
+        );
+
+        return transactionRepository.filterTransactionsPaged(
+                request.getUserId(),
+                request.getTxnType(),
+                request.getStatus(),
+                request.getStartDate(),
+                request.getEndDate(),
+                request.getMinAmount(),
+                request.getMaxAmount(),
+                normalizeSearchTerm(request.getSearchTerm()),
+                pageable
+        );
     }
 }
