@@ -14,7 +14,7 @@ public class RegisterRequest {
     private UserType userType;
 
     // ===== SECURITY =====
-    private List<SecurityQuestionRequest> securityQuestions;
+    private SecurityQuestionRequest securityQuestion;
 
     // ===== BUSINESS DETAILS (only if BUSINESS user) =====
     private String businessName;
@@ -68,13 +68,10 @@ public class RegisterRequest {
         this.userType = userType;
     }
 
-    public List<SecurityQuestionRequest> getSecurityQuestions() {
-        return securityQuestions;
-    }
+    public SecurityQuestionRequest getSecurityQuestion() { return securityQuestion; }
 
-    public void setSecurityQuestions(List<SecurityQuestionRequest> securityQuestions) {
-        this.securityQuestions = securityQuestions;
-    }
+    public void setSecurityQuestion(SecurityQuestionRequest securityQuestion) { this.securityQuestion =
+            securityQuestion;}
 
     public String getBusinessName() {
         return businessName;

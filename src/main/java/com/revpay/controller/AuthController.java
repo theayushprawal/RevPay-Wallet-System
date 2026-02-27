@@ -21,12 +21,31 @@ public class AuthController {
     }
 
     /**
-     * =========================
      * REGISTER API
-     * =========================
      */
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
+
+        // Basic null checks
+        if (request == null) {
+            throw new IllegalArgumentException("Request body cannot be null");
+        }
+
+        // Mandatory fields
+        if (request.getFullName() == null || request.getEmail() == null
+                || request.getPhone() == null || request.getPassword() == null) {
+            throw new IllegalArgumentException("Missing required registration fields");
+        }
+
+        // REQUIRED because of ONE security question rule
+        if (request.getSecurityQuestion() == null) {
+            throw new IllegalArgumentException("Security question is required");
+        }
+
+        if (request.getSecurityQuestion().getQuestion() == null
+                || request.getSecurityQuestion().getAnswer() == null) {
+            throw new IllegalArgumentException("Security question and answer are required");
+        }
 
         authService.registerUser(request);
 
@@ -36,9 +55,7 @@ public class AuthController {
     }
 
     /**
-     * =========================
      * LOGIN API
-     * =========================
      */
     @PostMapping("/login")
     public ResponseEntity<String> login(

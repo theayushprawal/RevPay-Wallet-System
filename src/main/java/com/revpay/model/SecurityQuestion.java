@@ -12,8 +12,8 @@ public class SecurityQuestion {
     @Column(name = "SQ_ID")
     private Long sqId;
 
-    @ManyToOne
-    @JoinColumn(name = "USER_ID")
+    @OneToOne
+    @JoinColumn(name = "USER_ID", unique = true)
     private User user;
 
     @Column(name = "QUESTION")
