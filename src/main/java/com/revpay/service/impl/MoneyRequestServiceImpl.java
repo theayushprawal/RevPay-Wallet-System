@@ -15,6 +15,8 @@ import com.revpay.repository.UserRepository;
 import com.revpay.service.AuthService;
 import com.revpay.service.MoneyRequestService;
 import com.revpay.service.TransactionService;
+import com.revpay.service.NotificationService;
+import com.revpay.model.enums.NotificationType;
 
 @Service
 @Transactional
@@ -24,16 +26,19 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     private final UserRepository userRepository;
     private final TransactionService transactionService;
     private final AuthService authService;
+    private final NotificationService notificationService;
 
     @Autowired
     public MoneyRequestServiceImpl(MoneyRequestRepository moneyRequestRepository,
                                    UserRepository userRepository,
                                    TransactionService transactionService,
-                                   AuthService authService) {
+                                   AuthService authService,
+                                   NotificationService notificationService) {
         this.moneyRequestRepository = moneyRequestRepository;
         this.userRepository = userRepository;
         this.transactionService = transactionService;
         this.authService = authService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -69,6 +74,12 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         request.setRemarks(note);
 
         moneyRequestRepository.save(request);
+
+        notificationService.createNotification(
+                receiver,
+                "You received a money request of ₹" + amount + " from " + sender.getFullName(),
+                NotificationType.MONEY_REQUEST
+        );
     }
 
     /**
@@ -109,6 +120,13 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         // Update request status
         request.setStatus(RequestStatus.ACCEPTED);
         moneyRequestRepository.save(request);
+
+        notificationService.createNotification(
+                request.getSender(),
+                "Your money request of ₹" + request.getAmount() + " was accepted by "
+                        + receiver.getFullName(),
+                NotificationType.MONEY_REQUEST
+        );
     }
 
     /**
@@ -131,6 +149,14 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         request.setStatus(RequestStatus.DECLINED);
 
         moneyRequestRepository.save(request);
+
+
+        notificationService.createNotification(
+                request.getSender(),
+                "Your money request of ₹" + request.getAmount() + " was declined by "
+                        + request.getReceiver().getFullName(),
+                NotificationType.MONEY_REQUEST
+        );
     }
 
     /**
@@ -152,5 +178,12 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
 
         request.setStatus(RequestStatus.CANCELLED);
         moneyRequestRepository.save(request);
+
+        notificationService.createNotification(
+                request.getReceiver(),
+                "Money request of ₹" + request.getAmount() + " was cancelled by "
+                        + request.getSender().getFullName(),
+                NotificationType.MONEY_REQUEST
+        );
     }
 }
