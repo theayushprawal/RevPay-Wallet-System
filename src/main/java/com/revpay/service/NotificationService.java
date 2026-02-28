@@ -24,4 +24,9 @@ public interface NotificationService {
      * Mark a notification as read
      */
     void markAsRead(Long notificationId);
+
+    /**
+     * Send notification
+     */
+    void sendNotification(Long userId, String message, NotificationType type);
 }

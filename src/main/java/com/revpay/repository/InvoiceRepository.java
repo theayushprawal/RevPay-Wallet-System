@@ -12,9 +12,15 @@ import com.revpay.model.enums.InvoiceStatus;
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-    // All invoices created by a business user
+    // All invoices created by a business
     List<Invoice> findByBusiness(User business);
 
-    // Filter invoices by status (PAID, DRAFT, OVERDUE, etc.)
+    // All invoices for a customer
+    List<Invoice> findByCustomerId(Long customerId);
+
+    // Filter invoices by status for a business
     List<Invoice> findByBusinessAndStatus(User business, InvoiceStatus status);
+
+    // Filter invoices by status for a customer
+    List<Invoice> findByCustomerIdAndStatus(Long customerId, InvoiceStatus status);
 }

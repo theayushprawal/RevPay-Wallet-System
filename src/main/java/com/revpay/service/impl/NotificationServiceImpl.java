@@ -62,4 +62,24 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setIsRead(YesNoStatus.YES);
         notificationRepository.save(notification);
     }
+
+    @Override
+    public void sendNotification(Long userId, String message, NotificationType type) {
+
+        if (userId == null) {
+            throw new IllegalArgumentException("UserId is required for notification");
+        }
+
+        Notification notification = new Notification();
+        notification.setUser(
+                userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"))
+        );
+        notification.setMessage(message);
+        notification.setType(type);
+        notification.setIsRead(YesNoStatus.NO);
+        notification.setCreatedAt(LocalDateTime.now());
+
+        notificationRepository.save(notification);
+    }
 }
