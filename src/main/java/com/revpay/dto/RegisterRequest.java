@@ -15,6 +15,7 @@ public class RegisterRequest {
 
     // ===== SECURITY =====
     private SecurityQuestionRequest securityQuestion;
+    private String transactionPin;
 
     // ===== BUSINESS DETAILS (only if BUSINESS user) =====
     private String businessName;
@@ -96,6 +97,10 @@ public class RegisterRequest {
     public void setPanNumber(String panNumber) {
         this.panNumber = panNumber;
     }
+
+    public String getTransactionPin() { return transactionPin; }
+
+    public void setTransactionPin(String transactionPin) { this.transactionPin = transactionPin; }
 
     public String getAddress() {
         return address;

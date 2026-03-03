@@ -51,6 +51,16 @@ public class AuthController {
             throw new IllegalArgumentException("Security question and answer are required");
         }
 
+        // ===== REQUIRED Transaction Pin VALIDATION =====
+
+        if (request.getTransactionPin() == null || request.getTransactionPin().isBlank()) {
+            throw new IllegalArgumentException("Transaction PIN is required");
+        }
+
+        if (!request.getTransactionPin().matches("\\d{4}")) {
+            throw new IllegalArgumentException("Transaction PIN must be exactly 4 digits");
+        }
+
         authService.registerUser(request);
 
         return ResponseEntity

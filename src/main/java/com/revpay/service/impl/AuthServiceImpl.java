@@ -59,8 +59,18 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Phone number already registered");
         }
 
+        // Checks for transaction PIN
+        if (request.getTransactionPin() == null || request.getTransactionPin().isBlank()) {
+            throw new IllegalArgumentException("Transaction PIN is required");
+        }
+
+        if (!request.getTransactionPin().matches("\\d{4}")) {
+            throw new IllegalArgumentException("Transaction PIN must be exactly 4 digits");
+        }
+
         // Hash password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
+        String hashedTransactionPin = passwordEncoder.encode(request.getTransactionPin());
 
         // Create User
         User user = new User();
@@ -68,6 +78,7 @@ public class AuthServiceImpl implements AuthService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setPasswordHash(hashedPassword);
+        user.setTransactionPinHash(hashedTransactionPin);
         user.setUserType(request.getUserType());
         user.setStatus(UserStatus.ACTIVE);
         user.setIsLocked(YesNoStatus.NO);
