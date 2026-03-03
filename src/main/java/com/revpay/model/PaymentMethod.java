@@ -2,6 +2,7 @@ package com.revpay.model;
 
 import java.time.LocalDate;
 
+import com.revpay.model.enums.PaymentMethodType;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
@@ -19,8 +20,9 @@ public class PaymentMethod {
     @JoinColumn(name = "USER_ID")
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "METHOD_TYPE")
-    private String methodType;
+    private PaymentMethodType methodType;
 
     @Column(name = "DETAILS_ENC")
     private String detailsEnc;
@@ -49,7 +51,7 @@ public class PaymentMethod {
 
     public PaymentMethod() {}
 
-    public PaymentMethod(Long pmId, User user, String methodType,
+    public PaymentMethod(Long pmId, User user, PaymentMethodType methodType,
                          String detailsEnc, String paymentName,
                          String cvv, String billingAddress,
                          String last4, LocalDate expiryDate,
@@ -73,8 +75,8 @@ public class PaymentMethod {
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
 
-    public String getMethodType() { return methodType; }
-    public void setMethodType(String methodType) { this.methodType = methodType; }
+    public PaymentMethodType getMethodType() { return methodType; }
+    public void setMethodType(PaymentMethodType methodType) { this.methodType = methodType; }
 
     public String getDetailsEnc() { return detailsEnc; }
     public void setDetailsEnc(String detailsEnc) { this.detailsEnc = detailsEnc; }
