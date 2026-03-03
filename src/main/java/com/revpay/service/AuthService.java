@@ -27,9 +27,9 @@ public interface AuthService {
     void changePassword(Long userId, String currentPassword, String newPassword);
 
     /**
-     * Set or update transaction PIN.
+     * Update transaction PIN.
      */
-    void setTransactionPin(Long userId, String rawPin);
+    void changeTransactionPin(Long userId, String oldPin, String newPin);
 
     /**
      * Verify transaction PIN (used by wallet/transaction services).

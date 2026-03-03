@@ -1,5 +1,7 @@
 package com.revpay.controller;
 
+import com.revpay.model.SecurityQuestion;
+import com.revpay.repository.SecurityQuestionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,9 @@ import com.revpay.dto.RegisterRequest;
 import com.revpay.model.User;
 import com.revpay.service.AuthService;
 import com.revpay.repository.UserRepository;
+import com.revpay.repository.SecurityQuestionRepository;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -16,12 +21,15 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
+    private final SecurityQuestionRepository securityQuestionRepository;
 
     @Autowired
     public AuthController(AuthService authService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          SecurityQuestionRepository securityQuestionRepository) {
         this.authService = authService;
         this.userRepository = userRepository;
+        this.securityQuestionRepository = securityQuestionRepository;
     }
 
     /**
@@ -81,6 +89,30 @@ public class AuthController {
         // For now, we just return a success message.
         // Later this can return JWT / session details.
         return ResponseEntity.ok("Login successful for user: " + user.getFullName());
+    }
+
+
+    /**
+     * FORGOT PASSWORD - FETCH SECURITY QUESTION
+     */
+    @GetMapping("/forgot-password/question")
+    public ResponseEntity<?> getSecurityQuestion(
+            @RequestParam String loginId) {
+
+        User user = userRepository
+                .findByEmailOrPhone(loginId, loginId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        SecurityQuestion securityQuestion = securityQuestionRepository
+                .findByUser(user)
+                .orElseThrow(() -> new IllegalStateException("Security question not set"));
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "userId", user.getUserId(),
+                        "question", securityQuestion.getQuestion()
+                )
+        );
     }
 
     /**

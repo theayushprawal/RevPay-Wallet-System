@@ -195,19 +195,35 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void setTransactionPin(Long userId, String rawPin) {
+    public void changeTransactionPin(Long userId, String oldPin, String newPin) {
+
+        if (oldPin == null || oldPin.isBlank()
+                || newPin == null || newPin.isBlank()) {
+            throw new IllegalArgumentException("Old PIN and new PIN are required");
+        }
+
+        if (!newPin.matches("\\d{4}")) {
+            throw new IllegalArgumentException("New transaction PIN must be exactly 4 digits");
+        }
 
         // Fetch user
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // Hash transaction PIN
-        String hashedPin = passwordEncoder.encode(rawPin);
+        // Verify old PIN
+        boolean matches = passwordEncoder.matches(
+                oldPin,
+                user.getTransactionPinHash()
+        );
 
-        // Set / update transaction PIN
-        user.setTransactionPinHash(hashedPin);
+        if (!matches) {
+            throw new IllegalArgumentException("Old transaction PIN is incorrect");
+        }
 
-        // Save user
+        // Hash and update new PIN
+        String hashedNewPin = passwordEncoder.encode(newPin);
+        user.setTransactionPinHash(hashedNewPin);
+
         userRepository.save(user);
     }
 
