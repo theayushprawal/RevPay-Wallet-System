@@ -21,4 +21,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Filter notifications by type (TRANSACTION, LOAN, INVOICE, etc.)
     List<Notification> findByUserAndType(User user, NotificationType type);
+
+    Long countByUserAndIsRead(User user, YesNoStatus isRead);
 }
