@@ -50,7 +50,7 @@ public class NotificationServiceImpl implements NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        return notificationRepository.findByUser(user);
+        return notificationRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
     @Override
@@ -79,6 +79,17 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setType(type);
         notification.setIsRead(YesNoStatus.NO);
         notification.setCreatedAt(LocalDateTime.now());
+
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    public void markNotificationAsRead(Long notificationId) {
+
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
+
+        notification.setIsRead(YesNoStatus.YES);
 
         notificationRepository.save(notification);
     }

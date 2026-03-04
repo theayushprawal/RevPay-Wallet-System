@@ -14,10 +14,10 @@ import com.revpay.model.enums.YesNoStatus;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     // All notifications for a user
-    List<Notification> findByUser(User user);
+    List<Notification> findByUserOrderByCreatedAtDesc(User user);
 
     // Unread notifications for a user
-    List<Notification> findByUserAndIsRead(User user, YesNoStatus isRead);
+    List<Notification> findByUserAndIsReadOrderByCreatedAtDesc(User user, YesNoStatus isRead);
 
     // Filter notifications by type (TRANSACTION, LOAN, INVOICE, etc.)
     List<Notification> findByUserAndType(User user, NotificationType type);

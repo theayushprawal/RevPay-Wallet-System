@@ -2,7 +2,6 @@ package com.revpay.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,15 +14,14 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @Autowired
     public NotificationController(NotificationService notificationService) {
         this.notificationService = notificationService;
     }
 
     /**
-     * GET USER NOTIFICATIONS
+     * GET ALL NOTIFICATIONS FOR USER
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResponseEntity<List<Notification>> getNotificationsForUser(
             @PathVariable Long userId) {
 
@@ -36,7 +34,7 @@ public class NotificationController {
     /**
      * MARK NOTIFICATION AS READ
      */
-    @PostMapping("/mark-read/{notificationId}")
+    @PatchMapping("/{notificationId}/read")
     public ResponseEntity<String> markAsRead(
             @PathVariable Long notificationId) {
 
