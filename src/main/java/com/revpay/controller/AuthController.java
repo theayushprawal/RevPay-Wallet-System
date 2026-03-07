@@ -23,7 +23,6 @@ public class AuthController {
     private final UserRepository userRepository;
     private final SecurityQuestionRepository securityQuestionRepository;
 
-    @Autowired
     public AuthController(AuthService authService,
                           UserRepository userRepository,
                           SecurityQuestionRepository securityQuestionRepository) {

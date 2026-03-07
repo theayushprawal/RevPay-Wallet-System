@@ -32,8 +32,6 @@ public interface NotificationService {
      */
     void sendNotification(Long userId, String message, NotificationType type);
 
-    void markNotificationAsRead(Long notificationId);
-
     void updateNotificationPreference(NotificationPreferenceRequest request);
 
     List<NotificationPreference> getPreferences(Long userId);

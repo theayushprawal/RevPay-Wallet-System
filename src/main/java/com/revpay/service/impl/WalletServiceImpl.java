@@ -20,7 +20,6 @@ public class WalletServiceImpl implements WalletService {
     private final UserRepository userRepository;
     private final AuthService authService;
 
-    @Autowired
     public WalletServiceImpl(WalletRepository walletRepository,
                              UserRepository userRepository,
                              AuthService authService) {

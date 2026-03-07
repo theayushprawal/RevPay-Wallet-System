@@ -36,7 +36,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final NotificationService notificationService;
     private final AuthService authService;
 
-    @Autowired
     public InvoiceServiceImpl(InvoiceRepository invoiceRepository,
                               InvoiceItemRepository invoiceItemRepository,
                               UserRepository userRepository,
