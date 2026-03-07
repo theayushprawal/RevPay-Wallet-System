@@ -2,6 +2,7 @@ package com.revpay.controller;
 
 import java.util.List;
 
+import com.revpay.dto.InvoiceSummaryResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -86,6 +87,16 @@ public class InvoiceController {
 
         return ResponseEntity.ok(
                 invoiceService.getInvoicesForCustomer(customerId)
+        );
+    }
+
+    // Get outstanding invoices for business
+    @GetMapping("/summary/{businessId}")
+    public ResponseEntity<InvoiceSummaryResponse> getInvoiceSummary(
+            @PathVariable Long businessId) {
+
+        return ResponseEntity.ok(
+                invoiceService.getInvoiceSummary(businessId)
         );
     }
 }

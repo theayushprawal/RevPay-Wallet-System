@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.revpay.dto.InvoiceItemRequest;
+import com.revpay.dto.InvoiceSummaryResponse;
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.UserType;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -263,5 +264,25 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
 
         return invoiceRepository.findByCustomerId(customerId);
+    }
+
+    @Override
+    public InvoiceSummaryResponse getInvoiceSummary(Long businessId) {
+
+        InvoiceSummaryResponse response = new InvoiceSummaryResponse();
+
+        response.setTotalPaid(
+                invoiceRepository.getTotalPaid(businessId)
+        );
+
+        response.setTotalPending(
+                invoiceRepository.getTotalPending(businessId)
+        );
+
+        response.setTotalOverdue(
+                invoiceRepository.getTotalOverdue(businessId)
+        );
+
+        return response;
     }
 }

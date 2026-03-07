@@ -3,6 +3,7 @@ package com.revpay.service;
 import java.util.List;
 
 import com.revpay.dto.CreateInvoiceRequest;
+import com.revpay.dto.InvoiceSummaryResponse;
 import com.revpay.model.Invoice;
 
 public interface InvoiceService {
@@ -36,4 +37,7 @@ public interface InvoiceService {
      * View all invoices for a customer
      */
     List<Invoice> getInvoicesForCustomer(Long customerId);
+
+    //View all outstanding invoices
+    InvoiceSummaryResponse getInvoiceSummary(Long businessId);
 }
