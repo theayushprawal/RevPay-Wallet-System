@@ -99,13 +99,21 @@ public class AuthServiceImpl implements AuthService {
         //Create Business Profile (ONLY if BUSINESS user)
         if (request.getUserType() == UserType.BUSINESS) {
 
+            if (request.getVerificationDocument() == null || request.getVerificationDocument().isBlank()) {
+                throw new IllegalArgumentException("Business verification document is required");
+            }
+
             BusinessProfile profile = new BusinessProfile();
             profile.setUser(user);
             profile.setBusinessName(request.getBusinessName());
             profile.setBusinessType(request.getBusinessType());
             profile.setPanNumber(request.getPanNumber());
             profile.setAddress(request.getAddress());
-            profile.setVerified(YesNoStatus.NO);
+            profile.setVerificationDocument(request.getVerificationDocument());
+            profile.setDocumentUploaded(YesNoStatus.YES);
+
+            // Simulated verification
+            profile.setVerified(YesNoStatus.YES);
 
             businessProfileRepository.save(profile);
         }

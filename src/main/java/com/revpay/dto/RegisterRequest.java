@@ -22,6 +22,7 @@ public class RegisterRequest {
     private String businessType;
     private String panNumber;
     private String address;
+    private String verificationDocument;
 
     // ===== CONSTRUCTORS =====
     public RegisterRequest() {
@@ -109,4 +110,8 @@ public class RegisterRequest {
     public void setAddress(String address) {
         this.address = address;
     }
+
+    public String getVerificationDocument() { return verificationDocument; }
+
+    public void setVerificationDocument(String verificationDocument) { this.verificationDocument = verificationDocument; }
 }
