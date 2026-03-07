@@ -195,4 +195,39 @@ public class TransactionServiceImpl implements TransactionService {
                 pageable
         );
     }
+
+    @Override
+    public byte[] exportTransactionsToCsv(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        List<Transaction> transactions =
+                transactionRepository.findBySenderOrReceiver(user, user);
+
+        StringBuilder csv = new StringBuilder();
+
+        // CSV header
+        csv.append("TransactionId,Sender,Receiver,Amount,Type,Status,Date\n");
+
+        for (Transaction txn : transactions) {
+
+            csv.append(txn.getTxnId()).append(",");
+
+            csv.append(txn.getSender() != null
+                    ? txn.getSender().getFullName()
+                    : "SYSTEM").append(",");
+
+            csv.append(txn.getReceiver() != null
+                    ? txn.getReceiver().getFullName()
+                    : "SYSTEM").append(",");
+
+            csv.append(txn.getAmount()).append(",");
+            csv.append(txn.getTxnType()).append(",");
+            csv.append(txn.getStatus()).append(",");
+            csv.append(txn.getTxnDate()).append("\n");
+        }
+
+        return csv.toString().getBytes();
+    }
 }

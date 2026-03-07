@@ -30,4 +30,6 @@ public interface TransactionService {
             int page,
             int size
     );
+
+    byte[] exportTransactionsToCsv(Long userId);
 }

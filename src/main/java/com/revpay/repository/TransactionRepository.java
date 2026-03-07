@@ -32,6 +32,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findTop5BySenderOrReceiverOrderByTxnDateDesc(User sender, User receiver);
 
+    List<Transaction> findBySenderOrReceiver(User sender, User receiver);
+
     // Filter by status
     List<Transaction> findBySenderAndStatus(User sender, TransactionStatus status);
 

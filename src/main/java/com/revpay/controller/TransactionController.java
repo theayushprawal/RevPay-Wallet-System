@@ -72,4 +72,17 @@ public class TransactionController {
 
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/export/csv")
+    public ResponseEntity<byte[]> exportTransactionsCsv(
+            @RequestParam Long userId) {
+
+        byte[] csvData = transactionService.exportTransactionsToCsv(userId);
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition",
+                        "attachment; filename=transactions.csv")
+                .header("Content-Type", "text/csv")
+                .body(csvData);
+    }
 }
