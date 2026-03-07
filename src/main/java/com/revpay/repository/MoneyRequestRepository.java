@@ -1,8 +1,11 @@
 package com.revpay.repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.revpay.model.MoneyRequest;
@@ -23,4 +26,13 @@ public interface MoneyRequestRepository extends JpaRepository<MoneyRequest, Long
 
     // Outgoing requests filtered by status
     List<MoneyRequest> findBySenderAndStatus(User sender, RequestStatus status);
+
+    @Query("""
+    SELECT COALESCE(SUM(m.amount),0)
+    FROM MoneyRequest m
+    WHERE m.receiver.userId = :userId
+    AND m.status = 'PENDING'
+    """)
+    BigDecimal getPendingRequestAmount(@Param("userId") Long userId);
+
 }

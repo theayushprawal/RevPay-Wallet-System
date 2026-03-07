@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.revpay.dto.TransactionFilterRequest;
+import com.revpay.dto.TransactionSummaryResponse;
 import com.revpay.model.Transaction;
 import org.springframework.data.domain.Page;
 
@@ -32,4 +33,6 @@ public interface TransactionService {
     );
 
     byte[] exportTransactionsToCsv(Long userId);
+
+    TransactionSummaryResponse getTransactionSummary(Long userId);
 }

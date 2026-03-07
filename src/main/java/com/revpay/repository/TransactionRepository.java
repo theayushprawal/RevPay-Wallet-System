@@ -71,4 +71,22 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("searchTerm") String searchTerm,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT COALESCE(SUM(t.amount),0)
+    FROM Transaction t
+    WHERE t.sender.userId = :userId
+    AND t.status = 'SUCCESS'
+    """)
+    BigDecimal getTotalSent(@Param("userId") Long userId);
+
+
+    @Query("""
+    SELECT COALESCE(SUM(t.amount),0)
+    FROM Transaction t
+    WHERE t.receiver.userId = :userId
+    AND t.status = 'SUCCESS'
+    """)
+    BigDecimal getTotalReceived(@Param("userId") Long userId);
+
 }

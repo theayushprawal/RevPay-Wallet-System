@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.revpay.dto.TransactionFilterRequest;
+import com.revpay.dto.TransactionSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -84,5 +85,14 @@ public class TransactionController {
                         "attachment; filename=transactions.csv")
                 .header("Content-Type", "text/csv")
                 .body(csvData);
+    }
+
+    @GetMapping("/summary/{userId}")
+    public ResponseEntity<TransactionSummaryResponse> getTransactionSummary(
+            @PathVariable Long userId) {
+
+        return ResponseEntity.ok(
+                transactionService.getTransactionSummary(userId)
+        );
     }
 }

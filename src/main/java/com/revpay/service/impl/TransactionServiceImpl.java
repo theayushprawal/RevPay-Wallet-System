@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.revpay.dto.TransactionFilterRequest;
+import com.revpay.dto.TransactionSummaryResponse;
 import com.revpay.model.User;
 import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
+import com.revpay.repository.MoneyRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,16 +35,18 @@ public class TransactionServiceImpl implements TransactionService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final AuthService authService;
+    private final MoneyRequestRepository moneyRequestRepository;
 
     @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                                   UserRepository userRepository,
                                   WalletRepository walletRepository,
-                                  AuthService authService) {
+                                  AuthService authService, MoneyRequestRepository moneyRequestRepository) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.authService = authService;
+        this.moneyRequestRepository = moneyRequestRepository;
     }
 
     @Override
@@ -229,5 +233,25 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         return csv.toString().getBytes();
+    }
+
+    @Override
+    public TransactionSummaryResponse getTransactionSummary(Long userId) {
+
+        TransactionSummaryResponse response = new TransactionSummaryResponse();
+
+        response.setTotalSent(
+                transactionRepository.getTotalSent(userId)
+        );
+
+        response.setTotalReceived(
+                transactionRepository.getTotalReceived(userId)
+        );
+
+        response.setPendingRequests(
+                moneyRequestRepository.getPendingRequestAmount(userId)
+        );
+
+        return response;
     }
 }
