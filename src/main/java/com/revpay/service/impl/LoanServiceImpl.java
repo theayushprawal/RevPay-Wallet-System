@@ -64,6 +64,10 @@ public class LoanServiceImpl implements LoanService {
             throw new IllegalArgumentException("Invalid tenure");
         }
 
+        if (request.getDocumentName() == null || request.getDocumentName().isBlank()) {
+            throw new IllegalArgumentException("Loan document is required");
+        }
+
         // Fetch business user
         User business = userRepository.findById(request.getBusinessId())
                 .orElseThrow(() -> new IllegalArgumentException("Business user not found"));
@@ -79,9 +83,12 @@ public class LoanServiceImpl implements LoanService {
         loan.setTenureMonths(request.getTenureMonths());
         loan.setPurpose(request.getPurpose());
         loan.setCreatedAt(LocalDateTime.now());
+        loan.setDocumentName(request.getDocumentName());
+        loan.setDocumentUploaded(YesNoStatus.YES);
 
         // Auto approval logic
-        if (request.getAmount().compareTo(AUTO_APPROVAL_LIMIT) <= 0) {
+        if (request.getAmount().compareTo(new BigDecimal("500000")) <= 0
+                && loan.getDocumentUploaded() == YesNoStatus.YES) {
             loan.setStatus(LoanStatus.APPROVED);
         } else {
             loan.setStatus(LoanStatus.REJECTED);

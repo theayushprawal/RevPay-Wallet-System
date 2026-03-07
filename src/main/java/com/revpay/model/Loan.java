@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.revpay.model.enums.LoanStatus;
+import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -46,12 +47,22 @@ public class Loan {
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RepaymentSchedule> repayments;
 
+    // NEW FIELD (Document simulation)
+    @Column(name = "DOCUMENT_NAME")
+    private String documentName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "DOCUMENT_UPLOADED")
+    private YesNoStatus documentUploaded;
+
     public Loan() {}
 
     public Loan(Long loanId, User business, BigDecimal amount,
                 BigDecimal emi, BigDecimal interestRate,
                 Integer tenureMonths, String purpose,
-                LoanStatus status, LocalDateTime createdAt) {
+                LoanStatus status, LocalDateTime createdAt,
+                String documentName, YesNoStatus documentUploaded) {
+
         this.loanId = loanId;
         this.business = business;
         this.amount = amount;
@@ -61,6 +72,8 @@ public class Loan {
         this.purpose = purpose;
         this.status = status;
         this.createdAt = createdAt;
+        this.documentName = documentName;
+        this.documentUploaded = documentUploaded;
     }
 
     public Long getLoanId() { return loanId; }
@@ -92,4 +105,10 @@ public class Loan {
 
     public List<RepaymentSchedule> getRepayments() { return repayments; }
     public void setRepayments(List<RepaymentSchedule> repayments) { this.repayments = repayments; }
+
+    public String getDocumentName() { return documentName; }
+    public void setDocumentName(String documentName) { this.documentName = documentName; }
+
+    public YesNoStatus getDocumentUploaded() { return documentUploaded; }
+    public void setDocumentUploaded(YesNoStatus documentUploaded) { this.documentUploaded = documentUploaded; }
 }
