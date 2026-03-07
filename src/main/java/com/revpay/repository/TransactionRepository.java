@@ -107,4 +107,17 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     """)
     List<TopCustomerResponse> getTopCustomers(@Param("businessId") Long businessId);
 
+    // For fetching revenue report (daily/weekly/monthly)
+    @Query("""
+SELECT COALESCE(SUM(t.amount),0)
+FROM Transaction t
+WHERE t.receiver.userId = :businessId
+AND t.status = 'SUCCESS'
+AND t.txnDate >= :startDate
+""")
+    BigDecimal getRevenueFromDate(
+            @Param("businessId") Long businessId,
+            @Param("startDate") LocalDateTime startDate
+    );
+
 }

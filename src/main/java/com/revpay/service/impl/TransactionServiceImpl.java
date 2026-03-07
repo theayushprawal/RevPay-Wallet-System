@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.revpay.dto.RevenueReportResponse;
 import com.revpay.dto.TopCustomerResponse;
 import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.dto.TransactionSummaryResponse;
@@ -260,5 +261,31 @@ public class TransactionServiceImpl implements TransactionService {
     public List<TopCustomerResponse> getTopCustomers(Long businessId) {
 
         return transactionRepository.getTopCustomers(businessId);
+    }
+
+    @Override
+    public RevenueReportResponse getRevenueReport(Long businessId) {
+
+        RevenueReportResponse response = new RevenueReportResponse();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        LocalDateTime dailyStart = now.minusDays(1);
+        LocalDateTime weeklyStart = now.minusDays(7);
+        LocalDateTime monthlyStart = now.minusDays(30);
+
+        response.setDailyRevenue(
+                transactionRepository.getRevenueFromDate(businessId, dailyStart)
+        );
+
+        response.setWeeklyRevenue(
+                transactionRepository.getRevenueFromDate(businessId, weeklyStart)
+        );
+
+        response.setMonthlyRevenue(
+                transactionRepository.getRevenueFromDate(businessId, monthlyStart)
+        );
+
+        return response;
     }
 }

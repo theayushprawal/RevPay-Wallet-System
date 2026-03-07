@@ -3,6 +3,7 @@ package com.revpay.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.revpay.dto.RevenueReportResponse;
 import com.revpay.dto.TopCustomerResponse;
 import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.dto.TransactionSummaryResponse;
@@ -35,7 +36,12 @@ public interface TransactionService {
 
     byte[] exportTransactionsToCsv(Long userId);
 
+    // To fetch transaction summary
     TransactionSummaryResponse getTransactionSummary(Long userId);
 
+    // To fetch top customer and payment trends
     List<TopCustomerResponse> getTopCustomers(Long businessId);
+
+    //For fetching revenue report (daily/weekly/monthly)
+    RevenueReportResponse getRevenueReport(Long businessId);
 }

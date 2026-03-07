@@ -3,6 +3,7 @@ package com.revpay.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.revpay.dto.RevenueReportResponse;
 import com.revpay.dto.TopCustomerResponse;
 import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.dto.TransactionSummaryResponse;
@@ -106,6 +107,16 @@ public class TransactionController {
 
         return ResponseEntity.ok(
                 transactionService.getTopCustomers(businessId)
+        );
+    }
+
+    //For fetching revenue report (daily/weekly/monthly)
+    @GetMapping("/revenue-report/{businessId}")
+    public ResponseEntity<RevenueReportResponse> getRevenueReport(
+            @PathVariable Long businessId) {
+
+        return ResponseEntity.ok(
+                transactionService.getRevenueReport(businessId)
         );
     }
 }
