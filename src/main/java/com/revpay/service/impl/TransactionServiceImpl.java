@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.revpay.dto.TopCustomerResponse;
 import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.dto.TransactionSummaryResponse;
 import com.revpay.model.User;
@@ -253,5 +254,11 @@ public class TransactionServiceImpl implements TransactionService {
         );
 
         return response;
+    }
+
+    @Override
+    public List<TopCustomerResponse> getTopCustomers(Long businessId) {
+
+        return transactionRepository.getTopCustomers(businessId);
     }
 }

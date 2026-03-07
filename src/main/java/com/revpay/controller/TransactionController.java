@@ -3,6 +3,7 @@ package com.revpay.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.revpay.dto.TopCustomerResponse;
 import com.revpay.dto.TransactionFilterRequest;
 import com.revpay.dto.TransactionSummaryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +75,7 @@ public class TransactionController {
         return ResponseEntity.ok(result);
     }
 
+    //for exporting transaction in csv file
     @GetMapping("/export/csv")
     public ResponseEntity<byte[]> exportTransactionsCsv(
             @RequestParam Long userId) {
@@ -87,12 +89,23 @@ public class TransactionController {
                 .body(csvData);
     }
 
+    //to get transaction summary
     @GetMapping("/summary/{userId}")
     public ResponseEntity<TransactionSummaryResponse> getTransactionSummary(
             @PathVariable Long userId) {
 
         return ResponseEntity.ok(
                 transactionService.getTransactionSummary(userId)
+        );
+    }
+
+    //for getting top customer analytics
+    @GetMapping("/top-customers/{businessId}")
+    public ResponseEntity<List<TopCustomerResponse>> getTopCustomers(
+            @PathVariable Long businessId) {
+
+        return ResponseEntity.ok(
+                transactionService.getTopCustomers(businessId)
         );
     }
 }

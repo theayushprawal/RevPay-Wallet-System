@@ -107,12 +107,7 @@ public class AuthController {
                 .findByUser(user)
                 .orElseThrow(() -> new IllegalStateException("Security question not set"));
 
-        return ResponseEntity.ok(
-                Map.of(
-                        "userId", user.getUserId(),
-                        "question", securityQuestion.getQuestion()
-                )
-        );
+        return ResponseEntity.ok(securityQuestion.getQuestion());
     }
 
     /**

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.revpay.dto.TopCustomerResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -72,6 +73,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
+
+    //For outstanding invoice
     @Query("""
     SELECT COALESCE(SUM(t.amount),0)
     FROM Transaction t
@@ -80,7 +83,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     """)
     BigDecimal getTotalSent(@Param("userId") Long userId);
 
-
     @Query("""
     SELECT COALESCE(SUM(t.amount),0)
     FROM Transaction t
@@ -88,5 +90,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     AND t.status = 'SUCCESS'
     """)
     BigDecimal getTotalReceived(@Param("userId") Long userId);
+
+    // for top customer analytics
+    @Query("""
+    SELECT new com.revpay.dto.TopCustomerResponse(
+    t.sender.userId,
+    t.sender.fullName,
+    COUNT(t),
+    SUM(t.amount)
+    )
+    FROM Transaction t
+    WHERE t.receiver.userId = :businessId
+    AND t.status = 'SUCCESS'
+    GROUP BY t.sender.userId, t.sender.fullName
+    ORDER BY SUM(t.amount) DESC
+    """)
+    List<TopCustomerResponse> getTopCustomers(@Param("businessId") Long businessId);
 
 }
