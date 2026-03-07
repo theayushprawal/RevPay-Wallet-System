@@ -15,4 +15,5 @@ public class ApplyLoanRequest {
     private BigDecimal amount;
     private Integer tenureMonths;
     private String purpose;
+    private String documentName;
 }
