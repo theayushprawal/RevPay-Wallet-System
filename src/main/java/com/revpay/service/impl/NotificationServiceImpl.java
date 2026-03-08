@@ -27,7 +27,6 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final NotificationPreferenceRepository notificationPreferenceRepository;
 
-    @Autowired
     public NotificationServiceImpl(NotificationRepository notificationRepository,
                                    UserRepository userRepository, NotificationPreferenceRepository notificationPreferenceRepository) {
         this.notificationRepository = notificationRepository;
@@ -95,17 +94,6 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setType(type);
         notification.setIsRead(YesNoStatus.NO);
         notification.setCreatedAt(LocalDateTime.now());
-
-        notificationRepository.save(notification);
-    }
-
-    @Override
-    public void markNotificationAsRead(Long notificationId) {
-
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new IllegalArgumentException("Notification not found"));
-
-        notification.setIsRead(YesNoStatus.YES);
 
         notificationRepository.save(notification);
     }

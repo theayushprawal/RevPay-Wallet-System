@@ -39,7 +39,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final AuthService authService;
     private final MoneyRequestRepository moneyRequestRepository;
 
-    @Autowired
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                                   UserRepository userRepository,
                                   WalletRepository walletRepository,

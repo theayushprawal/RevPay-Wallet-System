@@ -14,7 +14,6 @@ public class MoneyRequestController {
 
     private final MoneyRequestService moneyRequestService;
 
-    @Autowired
     public MoneyRequestController(MoneyRequestService moneyRequestService) {
         this.moneyRequestService = moneyRequestService;
     }

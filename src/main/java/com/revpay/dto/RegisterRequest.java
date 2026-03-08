@@ -1,117 +1,31 @@
 package com.revpay.dto;
 
-import java.util.List;
-
 import com.revpay.model.enums.UserType;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterRequest {
 
-    // ===== BASIC USER DETAILS =====
+    // BASIC USER DETAILS
     private String fullName;
     private String email;
     private String phone;
     private String password;
     private UserType userType;
 
-    // ===== SECURITY =====
+    // SECURITY
     private SecurityQuestionRequest securityQuestion;
     private String transactionPin;
 
-    // ===== BUSINESS DETAILS (only if BUSINESS user) =====
+    // BUSINESS DETAILS
     private String businessName;
     private String businessType;
     private String panNumber;
     private String address;
     private String verificationDocument;
-
-    // ===== CONSTRUCTORS =====
-    public RegisterRequest() {
-    }
-
-    // ===== GETTERS & SETTERS =====
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public UserType getUserType() {
-        return userType;
-    }
-
-    public void setUserType(UserType userType) {
-        this.userType = userType;
-    }
-
-    public SecurityQuestionRequest getSecurityQuestion() { return securityQuestion; }
-
-    public void setSecurityQuestion(SecurityQuestionRequest securityQuestion) { this.securityQuestion =
-            securityQuestion;}
-
-    public String getBusinessName() {
-        return businessName;
-    }
-
-    public void setBusinessName(String businessName) {
-        this.businessName = businessName;
-    }
-
-    public String getBusinessType() {
-        return businessType;
-    }
-
-    public void setBusinessType(String businessType) {
-        this.businessType = businessType;
-    }
-
-    public String getPanNumber() {
-        return panNumber;
-    }
-
-    public void setPanNumber(String panNumber) {
-        this.panNumber = panNumber;
-    }
-
-    public String getTransactionPin() { return transactionPin; }
-
-    public void setTransactionPin(String transactionPin) { this.transactionPin = transactionPin; }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getVerificationDocument() { return verificationDocument; }
-
-    public void setVerificationDocument(String verificationDocument) { this.verificationDocument = verificationDocument; }
 }

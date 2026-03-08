@@ -28,7 +28,6 @@ public class AuthServiceImpl implements AuthService {
     private final BusinessProfileRepository businessProfileRepository;
     private final SecurityQuestionRepository securityQuestionRepository;
 
-    @Autowired
     public AuthServiceImpl(UserRepository userRepository,
                            WalletRepository walletRepository,
                            BusinessProfileRepository businessProfileRepository,

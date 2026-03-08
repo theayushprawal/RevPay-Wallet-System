@@ -28,7 +28,6 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     private final AuthService authService;
     private final NotificationService notificationService;
 
-    @Autowired
     public MoneyRequestServiceImpl(MoneyRequestRepository moneyRequestRepository,
                                    UserRepository userRepository,
                                    TransactionService transactionService,
