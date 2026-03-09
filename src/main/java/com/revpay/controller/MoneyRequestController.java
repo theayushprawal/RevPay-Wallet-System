@@ -2,10 +2,10 @@ package com.revpay.controller;
 
 import java.math.BigDecimal;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.service.MoneyRequestService;
 
 @RestController
@@ -23,7 +23,7 @@ public class MoneyRequestController {
      * Sender creates a request for receiver
      */
     @PostMapping("/create")
-    public ResponseEntity<String> createRequest(
+    public ResponseEntity<ApiResponse<Void>> createRequest(
             @RequestParam Long senderId,
             @RequestParam Long receiverId,
             @RequestParam BigDecimal amount,
@@ -36,7 +36,13 @@ public class MoneyRequestController {
                 note
         );
 
-        return ResponseEntity.ok("Money request created successfully");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money request created successfully",
+                        null
+                )
+        );
     }
 
     /**
@@ -44,13 +50,19 @@ public class MoneyRequestController {
      * Receiver accepts the request
      */
     @PostMapping("/accept")
-    public ResponseEntity<String> acceptRequest(
+    public ResponseEntity<ApiResponse<Void>> acceptRequest(
             @RequestParam Long requestId,
             @RequestParam String transactionPin) {
 
         moneyRequestService.acceptRequest(requestId, transactionPin);
 
-        return ResponseEntity.ok("Money request accepted");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money request accepted",
+                        null
+                )
+        );
     }
 
     /**
@@ -58,12 +70,18 @@ public class MoneyRequestController {
      * Receiver declines the request
      */
     @PostMapping("/decline")
-    public ResponseEntity<String> declineRequest(
+    public ResponseEntity<ApiResponse<Void>> declineRequest(
             @RequestParam Long requestId) {
 
         moneyRequestService.declineRequest(requestId);
 
-        return ResponseEntity.ok("Money request declined");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money request declined",
+                        null
+                )
+        );
     }
 
     /**
@@ -71,11 +89,17 @@ public class MoneyRequestController {
      * Sender cancels the request
      */
     @PostMapping("/cancel")
-    public ResponseEntity<String> cancelRequest(
+    public ResponseEntity<ApiResponse<Void>> cancelRequest(
             @RequestParam Long requestId) {
 
         moneyRequestService.cancelRequest(requestId);
 
-        return ResponseEntity.ok("Money request cancelled");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money request cancelled",
+                        null
+                )
+        );
     }
 }

@@ -1,6 +1,8 @@
 package com.revpay.controller;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.dto.RepayLoanRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,29 +24,53 @@ public class LoanController {
      * Apply for a loan
      */
     @PostMapping("/apply")
-    public ResponseEntity<Loan> applyLoan(
-            @RequestBody ApplyLoanRequest request) {
+    public ResponseEntity<ApiResponse<Loan>> applyLoan(
+            @Valid @RequestBody ApplyLoanRequest request) {
 
         Loan loan = loanService.applyLoan(request);
-        return ResponseEntity.ok(loan);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Loan application submitted successfully",
+                        loan
+                )
+        );
     }
 
     /**
      * Disburse approved loan
      */
     @PostMapping("/{loanId}/disburse")
-    public ResponseEntity<String> disburseLoan(
+    public ResponseEntity<ApiResponse<Void>> disburseLoan(
             @PathVariable Long loanId) {
 
         loanService.disburseLoan(loanId);
-        return ResponseEntity.ok("Loan disbursed successfully");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Loan disbursed successfully",
+                        null
+                )
+        );
     }
 
+    /**
+     * Repay Loan
+     */
     @PostMapping("/repay")
-    public ResponseEntity<String> repayLoan(
-            @RequestBody RepayLoanRequest request) {
+    public ResponseEntity<ApiResponse<Void>> repayLoan(
+            @Valid @RequestBody RepayLoanRequest request) {
 
         loanService.repayLoan(request);
-        return ResponseEntity.ok("Loan repayment successful");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Loan repayment successful",
+                        null
+                )
+        );
     }
 }

@@ -2,10 +2,10 @@ package com.revpay.controller;
 
 import java.math.BigDecimal;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.service.WalletService;
 
 @RestController
@@ -22,37 +22,56 @@ public class WalletController {
      * GET WALLET BALANCE
      */
     @GetMapping("/balance/{userId}")
-    public ResponseEntity<BigDecimal> getBalance(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<BigDecimal>> getBalance(@PathVariable Long userId) {
 
         BigDecimal balance = walletService.getBalance(userId);
-        return ResponseEntity.ok(balance);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Wallet balance fetched successfully",
+                        balance
+                )
+        );
     }
 
     /**
      * ADD MONEY (DEPOSIT)
      */
     @PostMapping("/deposit")
-    public ResponseEntity<String> addMoney(
+    public ResponseEntity<ApiResponse<Void>> addMoney(
             @RequestParam Long userId,
             @RequestParam BigDecimal amount,
             @RequestParam String transactionPin) {
 
         walletService.addMoney(userId, amount, transactionPin);
 
-        return ResponseEntity.ok("Money added to wallet successfully");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money added to wallet successfully",
+                        null
+                )
+        );
     }
 
     /**
      * WITHDRAW MONEY
      */
     @PostMapping("/withdraw")
-    public ResponseEntity<String> withdrawMoney(
+    public ResponseEntity<ApiResponse<Void>> withdrawMoney(
             @RequestParam Long userId,
             @RequestParam BigDecimal amount,
             @RequestParam String transactionPin) {
 
         walletService.withdrawMoney(userId, amount, transactionPin);
 
-        return ResponseEntity.ok("Money withdrawn from wallet successfully");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money withdrawn from wallet successfully",
+                        null
+                )
+        );
     }
 }

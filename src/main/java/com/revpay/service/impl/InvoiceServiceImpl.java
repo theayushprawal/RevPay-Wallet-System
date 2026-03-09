@@ -53,19 +53,6 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Override
     public Invoice createInvoice(CreateInvoiceRequest request) {
 
-        // Basic validations
-        if (request.getBusinessId() == null) {
-            throw new IllegalArgumentException("BusinessId is required");
-        }
-
-        if (request.getCustomerId() == null) {
-            throw new IllegalArgumentException("CustomerId is required");
-        }
-
-        if (request.getItems() == null || request.getItems().isEmpty()) {
-            throw new IllegalArgumentException("Invoice must have at least one item");
-        }
-
         // Fetch business user
         User business = userRepository.findById(request.getBusinessId())
                 .orElseThrow(() -> new IllegalArgumentException("Business not found"));
@@ -91,15 +78,6 @@ public class InvoiceServiceImpl implements InvoiceService {
         BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (InvoiceItemRequest itemReq : request.getItems()) {
-
-            if (itemReq.getQuantity() == null || itemReq.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Item quantity must be greater than zero");
-            }
-
-            if (itemReq.getPrice() == null
-                    || itemReq.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Item price must be greater than zero");
-            }
 
             BigDecimal itemTotal =
                     itemReq.getPrice().multiply(BigDecimal.valueOf(itemReq.getQuantity()));
