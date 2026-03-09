@@ -1,6 +1,9 @@
 package com.revpay.exception;
 
 import com.revpay.dto.ApiError;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -8,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log =
+            LogManager.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handle validation errors from @Valid
@@ -18,8 +24,12 @@ public class GlobalExceptionHandler {
 
         String message = ex.getBindingResult()
                 .getFieldErrors()
-                .get(0)
-                .getDefaultMessage();
+                .stream()
+                .findFirst()
+                .map(error -> error.getDefaultMessage())
+                .orElse("Validation error");
+
+        log.warn("Validation error: {}", message);
 
         ApiError error = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
@@ -27,7 +37,9 @@ public class GlobalExceptionHandler {
                 message
         );
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     /**
@@ -37,13 +49,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleIllegalArgumentException(
             IllegalArgumentException ex) {
 
+        log.warn("Invalid request: {}", ex.getMessage());
+
         ApiError error = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
                 "Invalid Request",
                 ex.getMessage()
         );
 
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
     }
 
     /**
@@ -53,13 +69,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleIllegalStateException(
             IllegalStateException ex) {
 
+        log.warn("Illegal state: {}", ex.getMessage());
+
         ApiError error = new ApiError(
                 HttpStatus.CONFLICT.value(),
                 "Operation Not Allowed",
                 ex.getMessage()
         );
 
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(error);
     }
 
     /**
@@ -69,13 +89,16 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleGeneralException(
             Exception ex) {
 
+        log.error("Unexpected server error", ex);
+
         ApiError error = new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Server Error",
                 ex.getMessage()
         );
 
-        return new ResponseEntity<>(error,
-                HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error);
     }
 }

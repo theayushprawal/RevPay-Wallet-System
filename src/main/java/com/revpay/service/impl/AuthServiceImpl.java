@@ -1,7 +1,8 @@
 package com.revpay.service.impl;
 
 import com.revpay.dto.SecurityQuestionRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,8 @@ import com.revpay.repository.SecurityQuestionRepository;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+    private static final Logger log = LogManager.getLogger(AuthServiceImpl.class);
 
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
@@ -44,26 +47,32 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void registerUser(RegisterRequest request) {
 
-        // Basic null checks
+        log.info("Registration attempt for email={}", request.getEmail());
+
         if (request == null) {
+            log.error("Registration request is null");
             throw new IllegalArgumentException("Registration request cannot be null");
         }
 
         // Check uniqueness
         if (userRepository.existsByEmail(request.getEmail())) {
+            log.warn("Registration failed: email already registered {}", request.getEmail());
             throw new IllegalArgumentException("Email already registered");
         }
 
         if (userRepository.existsByPhone(request.getPhone())) {
+            log.warn("Registration failed: phone already registered {}", request.getPhone());
             throw new IllegalArgumentException("Phone number already registered");
         }
 
         // Checks for transaction PIN
         if (request.getTransactionPin() == null || request.getTransactionPin().isBlank()) {
+            log.warn("Registration failed: transaction PIN missing for email {}", request.getEmail());
             throw new IllegalArgumentException("Transaction PIN is required");
         }
 
         if (!request.getTransactionPin().matches("\\d{4}")) {
+            log.warn("Registration failed: invalid transaction PIN format for email {}", request.getEmail());
             throw new IllegalArgumentException("Transaction PIN must be exactly 4 digits");
         }
 
@@ -87,7 +96,8 @@ public class AuthServiceImpl implements AuthService {
         // Save user FIRST (important for FK relationships)
         user = userRepository.save(user);
 
-        // Create Wallet
+        log.info("User registered successfully with userId={}", user.getUserId());
+
         Wallet wallet = new Wallet();
         wallet.setUser(user);
         wallet.setBalance(BigDecimal.ZERO);
@@ -95,10 +105,12 @@ public class AuthServiceImpl implements AuthService {
 
         walletRepository.save(wallet);
 
-        //Create Business Profile (ONLY if BUSINESS user)
+        log.info("Wallet created for userId={}", user.getUserId());
+
         if (request.getUserType() == UserType.BUSINESS) {
 
             if (request.getVerificationDocument() == null || request.getVerificationDocument().isBlank()) {
+                log.warn("Business registration missing verification document for userId={}", user.getUserId());
                 throw new IllegalArgumentException("Business verification document is required");
             }
 
@@ -115,6 +127,8 @@ public class AuthServiceImpl implements AuthService {
             profile.setVerified(YesNoStatus.YES);
 
             businessProfileRepository.save(profile);
+
+            log.info("Business profile created for userId={}", user.getUserId());
         }
 
         // Save Security Questions
@@ -126,19 +140,26 @@ public class AuthServiceImpl implements AuthService {
             question.setAnswerHash(passwordEncoder.encode(sq.getAnswer()));
 
             securityQuestionRepository.save(question);
+
+            log.info("Security question saved for userId={}", user.getUserId());
         }
     }
 
     @Override
     public User login(String loginId, String rawPassword) {
 
-        // Find user by email OR phone
+        log.info("Login attempt for {}", loginId);
+
         User user = userRepository
                 .findByEmailOrPhone(loginId, loginId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+                .orElseThrow(() -> {
+                    log.warn("Login failed: user not found for {}", loginId);
+                    return new IllegalArgumentException("Invalid credentials");
+                });
 
         // Check if account is locked
         if (user.getIsLocked() == YesNoStatus.YES) {
+            log.warn("Login attempt on locked account userId={}", user.getUserId());
             throw new IllegalStateException("Account is locked due to multiple failed login attempts");
         }
 
@@ -157,10 +178,12 @@ public class AuthServiceImpl implements AuthService {
             // Lock account if threshold reached
             if (attempts >= 3) {
                 user.setIsLocked(YesNoStatus.YES);
+                log.warn("Account locked due to multiple failed login attempts userId={}", user.getUserId());
             }
 
             userRepository.save(user);
 
+            log.warn("Login failed for userId={}", user.getUserId());
             throw new IllegalArgumentException("Invalid credentials");
         }
 
@@ -170,21 +193,28 @@ public class AuthServiceImpl implements AuthService {
 
         userRepository.save(user);
 
+        log.info("Login successful for userId={}", user.getUserId());
+
         return user;
     }
 
     @Override
     public void changePassword(Long userId, String currentPassword, String newPassword) {
 
-        // Fetch user
+        log.info("Password change request for userId={}", userId);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Password change failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         // Verify current password
         boolean matches =
                 passwordEncoder.matches(currentPassword, user.getPasswordHash());
 
         if (!matches) {
+            log.warn("Password change failed: incorrect current password userId={}", userId);
             throw new IllegalArgumentException("Current password is incorrect");
         }
 
@@ -199,10 +229,14 @@ public class AuthServiceImpl implements AuthService {
 
         // Save user
         userRepository.save(user);
+
+        log.info("Password changed successfully for userId={}", userId);
     }
 
     @Override
     public void changeTransactionPin(Long userId, String oldPin, String newPin) {
+
+        log.info("Transaction PIN change requested for userId={}", userId);
 
         if (oldPin == null || oldPin.isBlank()
                 || newPin == null || newPin.isBlank()) {
@@ -215,7 +249,10 @@ public class AuthServiceImpl implements AuthService {
 
         // Fetch user
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Transaction PIN change failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         // Verify old PIN
         boolean matches = passwordEncoder.matches(
@@ -224,6 +261,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         if (!matches) {
+            log.warn("Transaction PIN change failed: incorrect old PIN userId={}", userId);
             throw new IllegalArgumentException("Old transaction PIN is incorrect");
         }
 
@@ -232,17 +270,21 @@ public class AuthServiceImpl implements AuthService {
         user.setTransactionPinHash(hashedNewPin);
 
         userRepository.save(user);
+
+        log.info("Transaction PIN changed successfully for userId={}", userId);
     }
 
     @Override
     public boolean verifyTransactionPin(User user, String rawPin) {
 
         if (user == null) {
+            log.error("verifyTransactionPin called with null user");
             throw new IllegalArgumentException("User cannot be null");
         }
 
         // If PIN is not set yet
         if (user.getTransactionPinHash() == null) {
+            log.warn("Transaction PIN not set for userId={}", user.getUserId());
             return false;
         }
 
@@ -253,15 +295,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean verifySecurityQuestion(String loginId, String answer) {
 
-        // Find user by email or phone
+        log.info("Security question verification attempt for {}", loginId);
+
         User user = userRepository
                 .findByEmailOrPhone(loginId, loginId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Security question verification failed: user not found {}", loginId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         // Fetch user's security question (ONE-TO-ONE)
         SecurityQuestion securityQuestion = securityQuestionRepository
                 .findByUser(user)
-                .orElseThrow(() -> new IllegalStateException("Security question not set"));
+                .orElseThrow(() -> {
+                    log.warn("Security question not set for userId={}", user.getUserId());
+                    return new IllegalStateException("Security question not set");
+                });
 
         // Compare provided answer with stored hash
         return passwordEncoder.matches(
@@ -273,9 +322,13 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void resetPassword(Long userId, String newPassword) {
 
-        // Fetch user
+        log.info("Password reset requested for userId={}", userId);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Password reset failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         // Hash new password
         String hashedPassword = passwordEncoder.encode(newPassword);
@@ -286,11 +339,11 @@ public class AuthServiceImpl implements AuthService {
         // Reset security-related fields
         user.setFailedAttempts(0);
         user.setIsLocked(YesNoStatus.NO);
-
-        // (Optional but good practice)
         user.setLastLogin(LocalDateTime.now());
 
         // Save user
         userRepository.save(user);
+
+        log.info("Password reset successful for userId={}", userId);
     }
 }

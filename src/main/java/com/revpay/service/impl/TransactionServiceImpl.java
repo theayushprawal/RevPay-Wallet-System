@@ -14,13 +14,15 @@ import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
 import com.revpay.repository.MoneyRequestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
 import org.springframework.transaction.annotation.Transactional;
 
 import com.revpay.model.Transaction;
@@ -33,6 +35,8 @@ import com.revpay.service.TransactionService;
 @Service
 public class TransactionServiceImpl implements TransactionService {
 
+    private static final Logger log = LogManager.getLogger(TransactionServiceImpl.class);
+
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
@@ -42,7 +46,8 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                                   UserRepository userRepository,
                                   WalletRepository walletRepository,
-                                  AuthService authService, MoneyRequestRepository moneyRequestRepository) {
+                                  AuthService authService,
+                                  MoneyRequestRepository moneyRequestRepository) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
@@ -58,38 +63,57 @@ public class TransactionServiceImpl implements TransactionService {
                           String transactionPin,
                           String remarks) {
 
-        // Validate sender != receiver
+        log.info("Initiating money transfer: senderId={}, receiverId={}, amount={}",
+                senderId, receiverId, amount);
+
         if (senderId.equals(receiverId)) {
+            log.warn("Money transfer failed: sender and receiver are same userId={}", senderId);
             throw new IllegalArgumentException("Sender and receiver cannot be the same");
         }
 
         // Validate amount
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Money transfer failed: invalid amount senderId={}", senderId);
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
         // Fetch sender & receiver
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+                .orElseThrow(() -> {
+                    log.warn("Money transfer failed: sender not found senderId={}", senderId);
+                    return new IllegalArgumentException("Sender not found");
+                });
 
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+                .orElseThrow(() -> {
+                    log.warn("Money transfer failed: receiver not found receiverId={}", receiverId);
+                    return new IllegalArgumentException("Receiver not found");
+                });
 
         // Verify sender transaction PIN
         boolean pinValid = authService.verifyTransactionPin(sender, transactionPin);
         if (!pinValid) {
+            log.warn("Money transfer failed: invalid transaction PIN userId={}", senderId);
             throw new IllegalArgumentException("Invalid transaction PIN");
         }
 
         // Fetch wallets
         Wallet senderWallet = walletRepository.findByUser(sender)
-                .orElseThrow(() -> new IllegalStateException("Sender wallet not found"));
+                .orElseThrow(() -> {
+                    log.error("Sender wallet not found userId={}", senderId);
+                    return new IllegalStateException("Sender wallet not found");
+                });
 
         Wallet receiverWallet = walletRepository.findByUser(receiver)
-                .orElseThrow(() -> new IllegalStateException("Receiver wallet not found"));
+                .orElseThrow(() -> {
+                    log.error("Receiver wallet not found userId={}", receiverId);
+                    return new IllegalStateException("Receiver wallet not found");
+                });
 
         // Check sufficient balance
         if (senderWallet.getBalance().compareTo(amount) < 0) {
+            log.warn("Money transfer failed: insufficient balance userId={}, balance={}, amount={}",
+                    senderId, senderWallet.getBalance(), amount);
             throw new IllegalStateException("Insufficient balance");
         }
 
@@ -128,33 +152,35 @@ public class TransactionServiceImpl implements TransactionService {
         // Save transactions
         transactionRepository.save(senderTxn);
         transactionRepository.save(receiverTxn);
+
+        log.info("Money transfer successful: senderId={}, receiverId={}, amount={}",
+                senderId, receiverId, amount);
     }
 
     // Fetches all the user transaction
     @Override
     public List<Transaction> getTransactionsForUser(Long userId) {
 
-        // Fetch user
+        log.info("Fetching transactions for userId={}", userId);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Transaction fetch failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
-        // Fetch sent transactions
-        List<Transaction> sentTransactions =
-                transactionRepository.findBySender(user);
-
-        // Fetch received transactions
-        List<Transaction> receivedTransactions =
-                transactionRepository.findByReceiver(user);
+        // Fetch sent and received transactions
+        List<Transaction> sentTransactions = transactionRepository.findBySender(user);
+        List<Transaction> receivedTransactions = transactionRepository.findByReceiver(user);
 
         // Merge both lists
         List<Transaction> allTransactions = new ArrayList<>();
         allTransactions.addAll(sentTransactions);
         allTransactions.addAll(receivedTransactions);
 
-        // Sort by transaction date (latest first)
-        allTransactions.sort(
-                (t1, t2) -> t2.getTxnDate().compareTo(t1.getTxnDate())
-        );
+        allTransactions.sort((t1, t2) -> t2.getTxnDate().compareTo(t1.getTxnDate()));
+
+        log.info("Transactions fetched successfully userId={}, count={}", userId, allTransactions.size());
 
         return allTransactions;
     }
@@ -173,6 +199,9 @@ public class TransactionServiceImpl implements TransactionService {
             TransactionFilterRequest request,
             int page,
             int size) {
+
+        log.info("Filtering transactions userId={}, page={}, size={}",
+                request.getUserId(), page, size);
 
         if (request.getUserId() == null) {
             throw new IllegalArgumentException("UserId is required for transaction filtering");
@@ -204,6 +233,8 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public byte[] exportTransactionsToCsv(Long userId) {
 
+        log.info("Exporting transactions CSV for userId={}", userId);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -233,11 +264,15 @@ public class TransactionServiceImpl implements TransactionService {
             csv.append(txn.getTxnDate()).append("\n");
         }
 
+        log.info("CSV export completed userId={}, records={}", userId, transactions.size());
+
         return csv.toString().getBytes();
     }
 
     @Override
     public TransactionSummaryResponse getTransactionSummary(Long userId) {
+
+        log.info("Fetching transaction summary for userId={}", userId);
 
         TransactionSummaryResponse response = new TransactionSummaryResponse();
 
@@ -259,11 +294,15 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<TopCustomerResponse> getTopCustomers(Long businessId) {
 
+        log.info("Fetching top customers for businessId={}", businessId);
+
         return transactionRepository.getTopCustomers(businessId);
     }
 
     @Override
     public RevenueReportResponse getRevenueReport(Long businessId) {
+
+        log.info("Generating revenue report for businessId={}", businessId);
 
         RevenueReportResponse response = new RevenueReportResponse();
 

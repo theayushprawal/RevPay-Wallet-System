@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.revpay.model.enums.RequestStatus;
 import com.revpay.model.enums.YesNoStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
 import com.revpay.dto.DashboardSummaryResponse;
@@ -19,6 +21,8 @@ import com.revpay.service.DashboardService;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
+
+    private static final Logger log = LogManager.getLogger(DashboardServiceImpl.class);
 
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
@@ -43,15 +47,23 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public DashboardSummaryResponse getDashboardSummary(Long userId) {
 
+        log.info("Fetching dashboard summary for userId={}", userId);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Dashboard request failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         DashboardSummaryResponse response = new DashboardSummaryResponse();
 
         // Wallet balance
         response.setWalletBalance(
                 walletRepository.findByUser(user)
-                        .orElseThrow(() -> new IllegalStateException("Wallet not found"))
+                        .orElseThrow(() -> {
+                            log.error("Wallet not found for userId={}", userId);
+                            return new IllegalStateException("Wallet not found");
+                        })
                         .getBalance()
         );
 
@@ -71,6 +83,12 @@ public class DashboardServiceImpl implements DashboardService {
         Long unread = notificationRepository.countByUserAndIsRead(user, YesNoStatus.NO);
 
         response.setUnreadNotifications(unread);
+
+        log.info("Dashboard summary generated for userId={}, recentTxns={}, pendingRequests={}, unreadNotifications={}",
+                userId,
+                recent.size(),
+                pending.size(),
+                unread);
 
         return response;
     }
