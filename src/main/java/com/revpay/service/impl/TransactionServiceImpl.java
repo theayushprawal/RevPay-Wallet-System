@@ -13,6 +13,7 @@ import com.revpay.model.User;
 import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
+import com.revpay.model.enums.UserType;
 import com.revpay.repository.MoneyRequestRepository;
 
 import org.apache.logging.log4j.LogManager;
@@ -296,6 +297,17 @@ public class TransactionServiceImpl implements TransactionService {
 
         log.info("Fetching top customers for businessId={}", businessId);
 
+        User business = userRepository.findById(businessId)
+                .orElseThrow(() -> {
+                    log.warn("Top customers fetch failed: user not found businessId={}", businessId);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (business.getUserType() != UserType.BUSINESS) {
+            log.warn("Top customers fetch denied: user is not business userId={}", businessId);
+            throw new IllegalStateException("Only business users can view top customers");
+        }
+
         return transactionRepository.getTopCustomers(businessId);
     }
 
@@ -303,6 +315,17 @@ public class TransactionServiceImpl implements TransactionService {
     public RevenueReportResponse getRevenueReport(Long businessId) {
 
         log.info("Generating revenue report for businessId={}", businessId);
+
+        User business = userRepository.findById(businessId)
+                .orElseThrow(() -> {
+                    log.warn("Revenue report failed: user not found businessId={}", businessId);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (business.getUserType() != UserType.BUSINESS) {
+            log.warn("Revenue report denied: user is not business userId={}", businessId);
+            throw new IllegalStateException("Only business users can view revenue reports");
+        }
 
         RevenueReportResponse response = new RevenueReportResponse();
 

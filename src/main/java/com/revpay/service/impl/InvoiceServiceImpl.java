@@ -140,6 +140,13 @@ public class InvoiceServiceImpl implements InvoiceService {
                     return new IllegalArgumentException("Invoice not found");
                 });
 
+        User business = invoice.getBusiness();
+
+        if (business.getUserType() != UserType.BUSINESS) {
+            log.warn("Send invoice denied: user is not business userId={}", business.getUserId());
+            throw new IllegalStateException("Only business users can send invoices");
+        }
+
         // Validate current status
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
             log.warn("Send invoice failed: invoice not in DRAFT state invoiceId={}", invoiceId);
@@ -250,6 +257,13 @@ public class InvoiceServiceImpl implements InvoiceService {
                     return new IllegalArgumentException("Invoice not found");
                 });
 
+        User business = invoice.getBusiness();
+
+        if (business.getUserType() != UserType.BUSINESS) {
+            log.warn("Cancel invoice denied: user is not business userId={}", business.getUserId());
+            throw new IllegalStateException("Only business users can cancel invoices");
+        }
+
         if (invoice.getStatus() != InvoiceStatus.DRAFT
                 && invoice.getStatus() != InvoiceStatus.SENT) {
             log.warn("Cancel invoice failed: invalid state invoiceId={} status={}",
@@ -310,6 +324,18 @@ public class InvoiceServiceImpl implements InvoiceService {
     public InvoiceSummaryResponse getInvoiceSummary(Long businessId) {
 
         log.info("Generating invoice summary for businessId={}", businessId);
+
+        // Verify business user
+        User business = userRepository.findById(businessId)
+                .orElseThrow(() -> {
+                    log.warn("Invoice summary failed: user not found businessId={}", businessId);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (business.getUserType() != UserType.BUSINESS) {
+            log.warn("Invoice summary denied: user is not business userId={}", businessId);
+            throw new IllegalStateException("Only business users can view invoice summary");
+        }
 
         InvoiceSummaryResponse response = new InvoiceSummaryResponse();
 
