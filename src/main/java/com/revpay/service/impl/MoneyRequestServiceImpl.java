@@ -3,7 +3,9 @@ package com.revpay.service.impl;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import com.revpay.model.enums.NotificationType;
 @Service
 @Transactional
 public class MoneyRequestServiceImpl implements MoneyRequestService {
+
+    private static final Logger log = LogManager.getLogger(MoneyRequestServiceImpl.class);
 
     private final MoneyRequestRepository moneyRequestRepository;
     private final UserRepository userRepository;
@@ -49,19 +53,30 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
                               BigDecimal amount,
                               String note) {
 
+        log.info("Creating money request senderId={} receiverId={} amount={}",
+                senderId, receiverId, amount);
+
         if (senderId.equals(receiverId)) {
+            log.warn("Money request failed: sender and receiver same userId={}", senderId);
             throw new IllegalArgumentException("Sender and receiver cannot be same");
         }
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("Money request failed: invalid amount senderId={}", senderId);
             throw new IllegalArgumentException("Amount must be greater than zero");
         }
 
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+                .orElseThrow(() -> {
+                    log.warn("Money request failed: sender not found senderId={}", senderId);
+                    return new IllegalArgumentException("Sender not found");
+                });
 
         User receiver = userRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+                .orElseThrow(() -> {
+                    log.warn("Money request failed: receiver not found receiverId={}", receiverId);
+                    return new IllegalArgumentException("Receiver not found");
+                });
 
         MoneyRequest request = new MoneyRequest();
         request.setSender(sender);
@@ -73,6 +88,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         request.setRemarks(note);
 
         moneyRequestRepository.save(request);
+
+        log.info("Money request created requestId={} senderId={} receiverId={}",
+                request.getRequestId(), senderId, receiverId);
 
         notificationService.createNotification(
                 receiver,
@@ -88,14 +106,21 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     public void acceptRequest(Long requestId,
                               String transactionPin) {
 
+        log.info("Accepting money request requestId={}", requestId);
+
         MoneyRequest request = moneyRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+                .orElseThrow(() -> {
+                    log.warn("Accept request failed: request not found requestId={}", requestId);
+                    return new IllegalArgumentException("Request not found");
+                });
 
         if (request.getStatus() != RequestStatus.PENDING) {
+            log.warn("Accept request failed: request not pending requestId={}", requestId);
             throw new IllegalStateException("Request is not pending");
         }
 
         if (request.getExpiryDate().isBefore(LocalDateTime.now())) {
+            log.warn("Accept request failed: request expired requestId={}", requestId);
             throw new IllegalStateException("Money request has expired");
         }
 
@@ -104,6 +129,7 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         // Verify transaction PIN of receiver (who pays)
         boolean pinValid = authService.verifyTransactionPin(receiver, transactionPin);
         if (!pinValid) {
+            log.warn("Accept request failed: invalid PIN userId={}", receiver.getUserId());
             throw new IllegalArgumentException("Invalid transaction PIN");
         }
 
@@ -120,6 +146,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         request.setStatus(RequestStatus.ACCEPTED);
         moneyRequestRepository.save(request);
 
+        log.info("Money request accepted requestId={} amount={}",
+                requestId, request.getAmount());
+
         notificationService.createNotification(
                 request.getSender(),
                 "Your money request of ₹" + request.getAmount() + " was accepted by "
@@ -134,14 +163,21 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     @Override
     public void declineRequest(Long requestId) {
 
+        log.info("Declining money request requestId={}", requestId);
+
         MoneyRequest request = moneyRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+                .orElseThrow(() -> {
+                    log.warn("Decline request failed: request not found requestId={}", requestId);
+                    return new IllegalArgumentException("Request not found");
+                });
 
         if (request.getStatus() != RequestStatus.PENDING) {
+            log.warn("Decline request failed: request not pending requestId={}", requestId);
             throw new IllegalStateException("Request is not pending");
         }
 
         if (request.getExpiryDate().isBefore(LocalDateTime.now())) {
+            log.warn("Decline request failed: request expired requestId={}", requestId);
             throw new IllegalStateException("Money request has expired");
         }
 
@@ -149,6 +185,7 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
 
         moneyRequestRepository.save(request);
 
+        log.info("Money request declined requestId={}", requestId);
 
         notificationService.createNotification(
                 request.getSender(),
@@ -164,19 +201,28 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     @Override
     public void cancelRequest(Long requestId) {
 
+        log.info("Cancelling money request requestId={}", requestId);
+
         MoneyRequest request = moneyRequestRepository.findById(requestId)
-                .orElseThrow(() -> new IllegalArgumentException("Request not found"));
+                .orElseThrow(() -> {
+                    log.warn("Cancel request failed: request not found requestId={}", requestId);
+                    return new IllegalArgumentException("Request not found");
+                });
 
         if (request.getStatus() != RequestStatus.PENDING) {
+            log.warn("Cancel request failed: request not pending requestId={}", requestId);
             throw new IllegalStateException("Only pending requests can be cancelled");
         }
 
         if (request.getExpiryDate().isBefore(LocalDateTime.now())) {
+            log.warn("Cancel request failed: request expired requestId={}", requestId);
             throw new IllegalStateException("Money request has expired");
         }
 
         request.setStatus(RequestStatus.CANCELLED);
         moneyRequestRepository.save(request);
+
+        log.info("Money request cancelled requestId={}", requestId);
 
         notificationService.createNotification(
                 request.getReceiver(),

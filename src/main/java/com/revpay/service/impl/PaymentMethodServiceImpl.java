@@ -4,6 +4,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.revpay.dto.UpdatePaymentMethodRequest;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,9 @@ import com.revpay.service.PaymentMethodService;
 @Transactional
 public class PaymentMethodServiceImpl implements PaymentMethodService {
 
+    private static final Logger log =
+            LogManager.getLogger(PaymentMethodServiceImpl.class);
+
     private final PaymentMethodRepository paymentMethodRepository;
     private final UserRepository userRepository;
 
@@ -32,12 +38,21 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     @Override
     public void addPaymentMethod(AddPaymentMethodRequest request) {
 
+        log.info("Adding payment method for userId={} type={}",
+                request != null ? request.getUserId() : null,
+                request != null ? request.getMethodType() : null);
+
         if (request == null || request.getUserId() == null) {
+            log.warn("Add payment method failed: invalid request");
             throw new IllegalArgumentException("Invalid payment method request");
         }
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Add payment method failed: user not found userId={}",
+                            request.getUserId());
+                    return new IllegalArgumentException("User not found");
+                });
 
         PaymentMethod pm = new PaymentMethod();
         pm.setUser(user);
@@ -70,31 +85,55 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
         // If setting default → unset others
         if (pm.getIsDefault() == YesNoStatus.YES) {
+            log.info("Setting default payment method userId={}", user.getUserId());
             unsetExistingDefault(user);
         }
 
         paymentMethodRepository.save(pm);
+
+        log.info("Payment method added successfully userId={} methodType={}",
+                user.getUserId(), pm.getMethodType());
     }
 
     @Override
     public List<PaymentMethod> getPaymentMethods(Long userId) {
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        log.info("Fetching payment methods for userId={}", userId);
 
-        return paymentMethodRepository.findByUser(user);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> {
+                    log.warn("Fetch payment methods failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        List<PaymentMethod> methods = paymentMethodRepository.findByUser(user);
+
+        log.info("Payment methods fetched count={} userId={}",
+                methods.size(), userId);
+
+        return methods;
     }
 
     @Override
     public void setDefaultPaymentMethod(Long userId, Long paymentMethodId) {
 
+        log.info("Setting default payment method userId={} paymentMethodId={}",
+                userId, paymentMethodId);
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> {
+                    log.warn("Set default failed: user not found userId={}", userId);
+                    return new IllegalArgumentException("User not found");
+                });
 
         PaymentMethod pm = paymentMethodRepository.findById(paymentMethodId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment method not found"));
+                .orElseThrow(() -> {
+                    log.warn("Set default failed: payment method not found id={}", paymentMethodId);
+                    return new IllegalArgumentException("Payment method not found");
+                });
 
         if (!pm.getUser().getUserId().equals(userId)) {
+            log.warn("Set default failed: ownership mismatch paymentMethodId={}", paymentMethodId);
             throw new IllegalStateException("Payment method does not belong to user");
         }
 
@@ -102,19 +141,33 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
 
         pm.setIsDefault(YesNoStatus.YES);
         paymentMethodRepository.save(pm);
+
+        log.info("Default payment method updated userId={} paymentMethodId={}",
+                userId, paymentMethodId);
     }
 
     @Override
     public void deletePaymentMethod(Long userId, Long paymentMethodId) {
 
+        log.info("Deleting payment method userId={} paymentMethodId={}",
+                userId, paymentMethodId);
+
         PaymentMethod pm = paymentMethodRepository.findById(paymentMethodId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment method not found"));
+                .orElseThrow(() -> {
+                    log.warn("Delete payment method failed: not found id={}", paymentMethodId);
+                    return new IllegalArgumentException("Payment method not found");
+                });
 
         if (!pm.getUser().getUserId().equals(userId)) {
+            log.warn("Delete payment method failed: ownership mismatch paymentMethodId={}",
+                    paymentMethodId);
             throw new IllegalStateException("Payment method does not belong to user");
         }
 
         paymentMethodRepository.delete(pm); // soft delete can be added later
+
+        log.info("Payment method deleted userId={} paymentMethodId={}",
+                userId, paymentMethodId);
     }
 
     // ===================== HELPERS =====================
@@ -154,15 +207,25 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
     public void updatePaymentMethod(Long paymentMethodId,
                                     UpdatePaymentMethodRequest request) {
 
+        log.info("Updating payment method paymentMethodId={} userId={}",
+                paymentMethodId,
+                request != null ? request.getUserId() : null);
+
         if (paymentMethodId == null || request == null || request.getUserId() == null) {
+            log.warn("Update payment method failed: invalid request");
             throw new IllegalArgumentException("Invalid update request");
         }
 
         PaymentMethod pm = paymentMethodRepository.findById(paymentMethodId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment method not found"));
+                .orElseThrow(() -> {
+                    log.warn("Update payment method failed: not found id={}", paymentMethodId);
+                    return new IllegalArgumentException("Payment method not found");
+                });
 
         // Ownership check
         if (!pm.getUser().getUserId().equals(request.getUserId())) {
+            log.warn("Update payment method failed: ownership mismatch paymentMethodId={}",
+                    paymentMethodId);
             throw new IllegalStateException("Payment method does not belong to user");
         }
 
@@ -180,5 +243,8 @@ public class PaymentMethodServiceImpl implements PaymentMethodService {
         }
 
         paymentMethodRepository.save(pm);
+
+        log.info("Payment method updated successfully paymentMethodId={}",
+                paymentMethodId);
     }
 }
