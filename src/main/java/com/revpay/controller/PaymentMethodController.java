@@ -2,7 +2,9 @@ package com.revpay.controller;
 
 import java.util.List;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.dto.UpdatePaymentMethodRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,47 +22,97 @@ public class PaymentMethodController {
         this.paymentMethodService = paymentMethodService;
     }
 
+    /**
+     * ADD PAYMENT METHOD
+     */
     @PostMapping
-    public ResponseEntity<String> addPaymentMethod(
-            @RequestBody AddPaymentMethodRequest request) {
+    public ResponseEntity<ApiResponse<Void>> addPaymentMethod(
+            @Valid @RequestBody AddPaymentMethodRequest request) {
 
         paymentMethodService.addPaymentMethod(request);
-        return ResponseEntity.ok("Payment method added successfully");
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<PaymentMethod>> getPaymentMethods(
-            @PathVariable Long userId) {
 
         return ResponseEntity.ok(
-                paymentMethodService.getPaymentMethods(userId)
+                new ApiResponse<>(
+                        true,
+                        "Payment method added successfully",
+                        null
+                )
         );
     }
 
+    /**
+     * GET USER PAYMENT METHODS
+     */
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<List<PaymentMethod>>> getPaymentMethods(
+            @PathVariable Long userId) {
+
+        List<PaymentMethod> methods =
+                paymentMethodService.getPaymentMethods(userId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Payment methods fetched successfully",
+                        methods
+                )
+        );
+    }
+
+    /**
+     * SET DEFAULT PAYMENT METHOD
+     */
     @PostMapping("/{userId}/{paymentMethodId}/default")
-    public ResponseEntity<String> setDefault(
+    public ResponseEntity<ApiResponse<Void>> setDefault(
             @PathVariable Long userId,
             @PathVariable Long paymentMethodId) {
 
         paymentMethodService.setDefaultPaymentMethod(userId, paymentMethodId);
-        return ResponseEntity.ok("Default payment method updated");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Default payment method updated",
+                        null
+                )
+        );
     }
 
+    /**
+     * DELETE PAYMENT METHOD
+     */
     @DeleteMapping("/{userId}/{paymentMethodId}")
-    public ResponseEntity<String> deletePaymentMethod(
+    public ResponseEntity<ApiResponse<Void>> deletePaymentMethod(
             @PathVariable Long userId,
             @PathVariable Long paymentMethodId) {
 
         paymentMethodService.deletePaymentMethod(userId, paymentMethodId);
-        return ResponseEntity.ok("Payment method deleted");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Payment method deleted",
+                        null
+                )
+        );
     }
 
+    /**
+     * UPDATE PAYMENT METHOD
+     */
     @PutMapping("/{paymentMethodId}")
-    public ResponseEntity<String> updatePaymentMethod(
+    public ResponseEntity<ApiResponse<Void>> updatePaymentMethod(
             @PathVariable Long paymentMethodId,
-            @RequestBody UpdatePaymentMethodRequest request) {
+            @Valid @RequestBody UpdatePaymentMethodRequest request) {
 
         paymentMethodService.updatePaymentMethod(paymentMethodId, request);
-        return ResponseEntity.ok("Payment method updated successfully");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Payment method updated successfully",
+                        null
+                )
+        );
     }
 }

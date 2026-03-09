@@ -2,6 +2,9 @@ package com.revpay.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -11,7 +14,13 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class RepayLoanRequest {
 
+    @NotNull(message = "LoanId is required")
     private Long loanId;
+
+    @NotNull(message = "BusinessId is required")
     private Long businessId;
-    private BigDecimal amount; // EMI amount
+
+    @NotNull(message = "Repayment amount is required")
+    @Positive(message = "Repayment amount must be greater than zero")
+    private BigDecimal amount;
 }

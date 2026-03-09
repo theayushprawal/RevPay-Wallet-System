@@ -3,11 +3,8 @@ package com.revpay.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.revpay.dto.RevenueReportResponse;
-import com.revpay.dto.TopCustomerResponse;
-import com.revpay.dto.TransactionFilterRequest;
-import com.revpay.dto.TransactionSummaryResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.revpay.dto.*;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +26,7 @@ public class TransactionController {
      * SEND MONEY
      */
     @PostMapping("/send")
-    public ResponseEntity<String> sendMoney(
+    public ResponseEntity<ApiResponse<Void>> sendMoney(
             @RequestParam Long senderId,
             @RequestParam Long receiverId,
             @RequestParam BigDecimal amount,
@@ -44,38 +41,58 @@ public class TransactionController {
                 remarks
         );
 
-        return ResponseEntity.ok("Money sent successfully");
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Money sent successfully",
+                        null
+                )
+        );
     }
 
     /**
      * TRANSACTION HISTORY
      */
     @GetMapping("/history/{userId}")
-    public ResponseEntity<List<Transaction>> getTransactionHistory(
+    public ResponseEntity<ApiResponse<List<Transaction>>> getTransactionHistory(
             @PathVariable Long userId) {
 
         List<Transaction> transactions =
                 transactionService.getTransactionsForUser(userId);
 
-        return ResponseEntity.ok(transactions);
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Transaction history fetched successfully",
+                        transactions
+                )
+        );
     }
 
     /**
-     * FILTER + PAGINATED HIST
+     * FILTER + PAGINATED HISTORY
      */
     @PostMapping("/filter/paged")
-    public ResponseEntity<Page<Transaction>> filterTransactionsPaged(
-            @RequestBody TransactionFilterRequest request,
+    public ResponseEntity<ApiResponse<Page<Transaction>>> filterTransactionsPaged(
+            @Valid @RequestBody TransactionFilterRequest request,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         Page<Transaction> result =
                 transactionService.filterTransactionsPaged(request, page, size);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Filtered transactions fetched successfully",
+                        result
+                )
+        );
     }
 
-    //for exporting transaction in csv file
+    /**
+     * EXPORT TRANSACTIONS (CSV)
+     */
     @GetMapping("/export/csv")
     public ResponseEntity<byte[]> exportTransactionsCsv(
             @RequestParam Long userId) {
@@ -89,33 +106,60 @@ public class TransactionController {
                 .body(csvData);
     }
 
-    //to get transaction summary
+    /**
+     * TRANSACTION SUMMARY
+     */
     @GetMapping("/summary/{userId}")
-    public ResponseEntity<TransactionSummaryResponse> getTransactionSummary(
+    public ResponseEntity<ApiResponse<TransactionSummaryResponse>> getTransactionSummary(
             @PathVariable Long userId) {
 
+        TransactionSummaryResponse summary =
+                transactionService.getTransactionSummary(userId);
+
         return ResponseEntity.ok(
-                transactionService.getTransactionSummary(userId)
+                new ApiResponse<>(
+                        true,
+                        "Transaction summary fetched successfully",
+                        summary
+                )
         );
     }
 
-    //for getting top customer analytics
+    /**
+     * TOP CUSTOMERS ANALYTICS
+     */
     @GetMapping("/top-customers/{businessId}")
-    public ResponseEntity<List<TopCustomerResponse>> getTopCustomers(
+    public ResponseEntity<ApiResponse<List<TopCustomerResponse>>> getTopCustomers(
             @PathVariable Long businessId) {
 
+        List<TopCustomerResponse> customers =
+                transactionService.getTopCustomers(businessId);
+
         return ResponseEntity.ok(
-                transactionService.getTopCustomers(businessId)
+                new ApiResponse<>(
+                        true,
+                        "Top customers fetched successfully",
+                        customers
+                )
         );
     }
 
-    //For fetching revenue report (daily/weekly/monthly)
+    /**
+     * REVENUE REPORT
+     */
     @GetMapping("/revenue-report/{businessId}")
-    public ResponseEntity<RevenueReportResponse> getRevenueReport(
+    public ResponseEntity<ApiResponse<RevenueReportResponse>> getRevenueReport(
             @PathVariable Long businessId) {
 
+        RevenueReportResponse report =
+                transactionService.getRevenueReport(businessId);
+
         return ResponseEntity.ok(
-                transactionService.getRevenueReport(businessId)
+                new ApiResponse<>(
+                        true,
+                        "Revenue report fetched successfully",
+                        report
+                )
         );
     }
 }

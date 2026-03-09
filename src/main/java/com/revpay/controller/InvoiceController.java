@@ -2,7 +2,9 @@ package com.revpay.controller;
 
 import java.util.List;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.dto.InvoiceSummaryResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,57 +26,92 @@ public class InvoiceController {
      * CREATE INVOICE (DRAFT)
      */
     @PostMapping
-    public ResponseEntity<Invoice> createInvoice(
-            @RequestBody CreateInvoiceRequest request) {
+    public ResponseEntity<ApiResponse<Invoice>> createInvoice(
+            @Valid @RequestBody CreateInvoiceRequest request) {
 
         Invoice invoice = invoiceService.createInvoice(request);
-        return ResponseEntity.ok(invoice);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Invoice created successfully",
+                        invoice
+                )
+        );
     }
 
     /**
      * SEND INVOICE (DRAFT -> SENT)
      */
     @PostMapping("/{invoiceId}/send")
-    public ResponseEntity<String> sendInvoice(
+    public ResponseEntity<ApiResponse<Void>> sendInvoice(
             @PathVariable Long invoiceId) {
 
         invoiceService.sendInvoice(invoiceId);
-        return ResponseEntity.ok("Invoice sent successfully");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Invoice sent successfully",
+                        null
+                )
+        );
     }
 
     /**
      * PAY INVOICE (SENT -> PAID)
      */
     @PostMapping("/{invoiceId}/pay")
-    public ResponseEntity<String> payInvoice(
+    public ResponseEntity<ApiResponse<Void>> payInvoice(
             @PathVariable Long invoiceId,
             @RequestParam Long customerId,
             @RequestParam String transactionPin) {
 
         invoiceService.payInvoice(invoiceId, customerId, transactionPin);
-        return ResponseEntity.ok("Invoice paid successfully");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Invoice paid successfully",
+                        null
+                )
+        );
     }
 
     /**
      * CANCEL INVOICE
      */
     @PostMapping("/{invoiceId}/cancel")
-    public ResponseEntity<String> cancelInvoice(
+    public ResponseEntity<ApiResponse<Void>> cancelInvoice(
             @PathVariable Long invoiceId) {
 
         invoiceService.cancelInvoice(invoiceId);
-        return ResponseEntity.ok("Invoice cancelled successfully");
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Invoice cancelled successfully",
+                        null
+                )
+        );
     }
 
     /**
      * GET INVOICES FOR BUSINESS
      */
     @GetMapping("/business/{businessId}")
-    public ResponseEntity<List<Invoice>> getInvoicesForBusiness(
+    public ResponseEntity<ApiResponse<List<Invoice>>> getInvoicesForBusiness(
             @PathVariable Long businessId) {
 
+        List<Invoice> invoices =
+                invoiceService.getInvoicesForBusiness(businessId);
+
         return ResponseEntity.ok(
-                invoiceService.getInvoicesForBusiness(businessId)
+                new ApiResponse<>(
+                        true,
+                        "Business invoices fetched successfully",
+                        invoices
+                )
         );
     }
 
@@ -82,21 +119,37 @@ public class InvoiceController {
      * GET INVOICES FOR CUSTOMER
      */
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<Invoice>> getInvoicesForCustomer(
+    public ResponseEntity<ApiResponse<List<Invoice>>> getInvoicesForCustomer(
             @PathVariable Long customerId) {
 
+        List<Invoice> invoices =
+                invoiceService.getInvoicesForCustomer(customerId);
+
         return ResponseEntity.ok(
-                invoiceService.getInvoicesForCustomer(customerId)
+                new ApiResponse<>(
+                        true,
+                        "Customer invoices fetched successfully",
+                        invoices
+                )
         );
     }
 
-    // Get outstanding invoices for business
+    /**
+     * GET OUTSTANDING INVOICE SUMMARY
+     */
     @GetMapping("/summary/{businessId}")
-    public ResponseEntity<InvoiceSummaryResponse> getInvoiceSummary(
+    public ResponseEntity<ApiResponse<InvoiceSummaryResponse>> getInvoiceSummary(
             @PathVariable Long businessId) {
 
+        InvoiceSummaryResponse summary =
+                invoiceService.getInvoiceSummary(businessId);
+
         return ResponseEntity.ok(
-                invoiceService.getInvoiceSummary(businessId)
+                new ApiResponse<>(
+                        true,
+                        "Invoice summary fetched successfully",
+                        summary
+                )
         );
     }
 }

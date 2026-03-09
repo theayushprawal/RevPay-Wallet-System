@@ -1,66 +1,81 @@
 package com.revpay.exception;
 
+import com.revpay.dto.ApiError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import com.revpay.dto.ApiError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * BAD REQUEST (400)
+     * Handle validation errors from @Valid
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleValidationException(
+            MethodArgumentNotValidException ex) {
+
+        String message = ex.getBindingResult()
+                .getFieldErrors()
+                .get(0)
+                .getDefaultMessage();
+
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                "Validation Failed",
+                message
+        );
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Handle IllegalArgumentException
      */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> handleIllegalArgument(
+    public ResponseEntity<ApiError> handleIllegalArgumentException(
             IllegalArgumentException ex) {
 
         ApiError error = new ApiError(
                 HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Invalid Request",
                 ex.getMessage()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(error);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     /**
-     * CONFLICT / INVALID STATE (409)
+     * Handle IllegalStateException
      */
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiError> handleIllegalState(
+    public ResponseEntity<ApiError> handleIllegalStateException(
             IllegalStateException ex) {
 
         ApiError error = new ApiError(
                 HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
+                "Operation Not Allowed",
                 ex.getMessage()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(error);
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     /**
-     * FALLBACK (500)
+     * Handle all other exceptions
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGenericException(
+    public ResponseEntity<ApiError> handleGeneralException(
             Exception ex) {
 
         ApiError error = new ApiError(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "Something went wrong"
+                "Server Error",
+                ex.getMessage()
         );
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error);
+        return new ResponseEntity<>(error,
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

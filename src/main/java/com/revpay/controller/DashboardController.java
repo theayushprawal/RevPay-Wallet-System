@@ -3,6 +3,7 @@ package com.revpay.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.revpay.dto.ApiResponse;
 import com.revpay.dto.DashboardSummaryResponse;
 import com.revpay.service.DashboardService;
 
@@ -17,11 +18,18 @@ public class DashboardController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<DashboardSummaryResponse> getDashboardSummary(
+    public ResponseEntity<ApiResponse<DashboardSummaryResponse>> getDashboardSummary(
             @RequestParam Long userId) {
 
+        DashboardSummaryResponse summary =
+                dashboardService.getDashboardSummary(userId);
+
         return ResponseEntity.ok(
-                dashboardService.getDashboardSummary(userId)
+                new ApiResponse<>(
+                        true,
+                        "Dashboard summary fetched successfully",
+                        summary
+                )
         );
     }
 }
