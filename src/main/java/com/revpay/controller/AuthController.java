@@ -46,7 +46,7 @@ public class AuthController {
      * LOGIN API
      */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<String>> login(
+    public ResponseEntity<ApiResponse<Long>> login(
             @RequestParam("loginId") String loginId,
             @RequestParam("password") String password) {
 
@@ -55,7 +55,7 @@ public class AuthController {
         return ResponseEntity.ok(
                 new ApiResponse<>(true,
                         "Login successful",
-                        "Welcome " + user.getFullName())
+                        user.getUserId())
         );
     }
 
@@ -120,6 +120,38 @@ public class AuthController {
                 new ApiResponse<>(true,
                         "Password reset successful",
                         null)
+        );
+    }
+
+    /**
+     * CHANGE PASSWORD (Logged in user)
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestParam Long userId,
+            @RequestParam String currentPassword,
+            @RequestParam String newPassword) {
+
+        authService.changePassword(userId, currentPassword, newPassword);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Password changed successfully", null)
+        );
+    }
+
+    /**
+     * CHANGE TRANSACTION PIN (Logged in user)
+     */
+    @PostMapping("/change-pin")
+    public ResponseEntity<ApiResponse<Void>> changeTransactionPin(
+            @RequestParam Long userId,
+            @RequestParam String oldPin,
+            @RequestParam String newPin) {
+
+        authService.changeTransactionPin(userId, oldPin, newPin);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Transaction PIN changed successfully", null)
         );
     }
 }

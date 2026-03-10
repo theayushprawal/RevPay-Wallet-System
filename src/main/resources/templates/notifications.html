@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Notifications')}"></head>
+<body class="bg-light">
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5">
+    <h2 class="fw-bold text-primary mb-4">Notification Center</h2>
+
+    <ul class="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-sm" id="notifTabs">
+        <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#inbox">Inbox</button></li>
+        <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#preferences">Settings</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="inbox">
+            <div id="notifList" class="row">
+                <div class="text-center py-5 text-muted">Loading your alerts...</div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="preferences">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Alert Preferences</h5>
+                    <p class="text-muted small mb-4">Choose which types of activities you want to be notified about.</p>
+                    <div id="prefList">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+<script>
+    const userId = localStorage.getItem('userId');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) { window.location.href = '/login'; return; }
+        loadNotifications();
+        loadPreferences();
+    });
+
+    function loadNotifications() {
+        const container = document.getElementById('notifList');
+        fetch(`/notifications/user/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
+                const notifs = data.data || data;
+                if (!notifs || notifs.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center py-5 text-muted">No notifications yet.</div>';
+                    return;
+                }
+                notifs.forEach(n => {
+                    const isUnread = n.isRead === 'NO';
+                    const card = document.createElement('div');
+                    card.className = 'col-12 mb-3';
+                    card.innerHTML = `
+                        <div class="card shadow-sm border-0 rounded-4 ${isUnread ? 'border-start border-primary border-4' : 'opacity-75'}">
+                            <div class="card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="badge bg-light text-primary mb-2">${n.type}</span>
+                                    <h6 class="mb-1 ${isUnread ? 'fw-bold' : ''}">${n.message}</h6>
+                                    <small class="text-muted">${new Date(n.createdAt).toLocaleString()}</small>
+                                </div>
+                                ${isUnread ? `<button class="btn btn-sm btn-outline-primary" onclick="markRead(${n.notificationId})">Mark Read</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            });
+    }
+
+    function markRead(id) {
+        fetch(`/notifications/${id}/read`, { method: 'PATCH' })
+            .then(() => loadNotifications());
+    }
+
+    function loadPreferences() {
+        const types = ['TRANSACTION', 'LOAN', 'INVOICE', 'SYSTEM'];
+        const container = document.getElementById('prefList');
+        container.innerHTML = '';
+
+        types.forEach(type => {
+            const row = document.createElement('div');
+            row.className = 'd-flex justify-content-between align-items-center mb-3 border-bottom pb-3';
+            row.innerHTML = `
+                <div><span class="fw-bold">${type}</span><br><small class="text-muted">Receive alerts regarding ${type.toLowerCase()} updates</small></div>
+                <div class="form-check form-switch">
+                    <input class="form-switch-input h4" type="checkbox" role="switch" id="pref-${type}" checked onchange="togglePref('${type}', this.checked)">
+                </div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function togglePref(type, isEnabled) {
+        const payload = {
+            userId: userId,
+            type: type,
+            enabled: isEnabled ? 'YES' : 'NO'
+        };
+        fetch('/notifications/preferences', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+    }
+</script>
+</body>
+</html>

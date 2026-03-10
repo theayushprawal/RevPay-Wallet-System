@@ -2,6 +2,7 @@ package com.revpay.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -230,5 +231,19 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
                         + request.getSender().getFullName(),
                 NotificationType.MONEY_REQUEST
         );
+    }
+
+    @Override
+    public List<MoneyRequest> getIncomingRequests(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return moneyRequestRepository.findByReceiver(user);
+    }
+
+    @Override
+    public List<MoneyRequest> getOutgoingRequests(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        return moneyRequestRepository.findBySender(user);
     }
 }

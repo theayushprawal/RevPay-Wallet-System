@@ -15,6 +15,8 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     // All loans for a business user
     List<Loan> findByBusiness(User business);
 
+    List<Loan> findByBusiness_UserId(Long userId);
+
     // Loans filtered by status (PENDING, APPROVED, REJECTED, CLOSED)
     List<Loan> findByBusinessAndStatus(User business, LoanStatus status);
 }
