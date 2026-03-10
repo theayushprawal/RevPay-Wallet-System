@@ -2,6 +2,8 @@ package com.revpay.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -14,6 +16,7 @@ public class RepaymentSchedule {
     @Column(name = "REPAYMENT_ID")
     private Long repaymentId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "LOAN_ID")
     private Loan loan;

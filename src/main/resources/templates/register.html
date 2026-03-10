@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Register')}"></head>
+
+<body class="bg-light py-5">
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow rounded-4 border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-primary fw-bold">Create Account</h2>
+                        <p class="text-muted">Join RevPay today</p>
+                    </div>
+
+                    <div id="messageAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="registerForm">
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">1. Account Type</h5>
+                        <div class="mb-4 d-flex gap-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="userType" id="typePersonal" value="PERSONAL" checked onchange="toggleBusinessFields()">
+                                <label class="form-check-label fw-bold" for="typePersonal">Personal Account</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="userType" id="typeBusiness" value="BUSINESS" onchange="toggleBusinessFields()">
+                                <label class="form-check-label fw-bold" for="typeBusiness">Business Account</label>
+                            </div>
+                        </div>
+
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">2. Personal Details</h5>
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Full Name</label>
+                            <input type="text" id="fullName" class="form-control" required>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Email</label>
+                                <input type="email" id="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Phone Number</label>
+                                <input type="text" id="phone" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Password</label>
+                                <input type="password" id="password" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">4-Digit Txn PIN</label>
+                                <input type="password" id="transactionPin" class="form-control" pattern="\d{4}" title="Must be exactly 4 digits" required>
+                            </div>
+                        </div>
+
+                        <h5 class="text-secondary border-bottom pb-2 mb-3">3. Account Security</h5>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Security Question</label>
+                                <select id="secQuestion" class="form-select" required>
+                                    <option value="" disabled selected>Select a question...</option>
+                                    <option value="What is your nickname?">What is your nickname?</option>
+                                    <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                                    <option value="What city were you born in?">What city were you born in?</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-muted fw-bold">Answer</label>
+                                <input type="text" id="secAnswer" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div id="businessDetailsSection" class="d-none bg-light p-4 rounded-3 mb-4 border">
+                            <h5 class="text-primary border-bottom pb-2 mb-3">Business Information</h5>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-bold">Business Name</label>
+                                    <input type="text" id="businessName" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-bold">Business Type</label>
+                                    <select id="businessType" class="form-select">
+                                        <option value="" disabled selected>Select type...</option>
+                                        <option value="Retail">Retail</option>
+                                        <option value="IT Services">IT Services</option>
+                                        <option value="Consulting">Consulting</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-bold">PAN Number</label>
+                                    <input type="text" id="panNumber" class="form-control text-uppercase">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label text-muted fw-bold">Verification Document Link</label>
+                                    <input type="text" id="verificationDocument" class="form-control" placeholder="URL to document">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted fw-bold">Business Address</label>
+                                <textarea id="address" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold mt-2">Register Account</button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p class="text-muted">Already have an account? <a href="/login" class="text-decoration-none">Sign In</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    // Toggle Business Fields ON/OFF
+    function toggleBusinessFields() {
+        const isBusiness = document.getElementById('typeBusiness').checked;
+        const businessSection = document.getElementById('businessDetailsSection');
+
+        if (isBusiness) {
+            businessSection.classList.remove('d-none');
+            document.getElementById('businessName').required = true;
+            document.getElementById('panNumber').required = true;
+        } else {
+            businessSection.classList.add('d-none');
+            document.getElementById('businessName').required = false;
+            document.getElementById('panNumber').required = false;
+        }
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const userType = document.querySelector('input[name="userType"]:checked').value;
+
+        // 1. Build the payload exactly mapping to RegisterRequest DTO
+        const payload = {
+            fullName: document.getElementById('fullName').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            password: document.getElementById('password').value,
+            userType: userType,
+            transactionPin: document.getElementById('transactionPin').value,
+
+            // Nested Security Question Request
+            securityQuestion: {
+                question: document.getElementById('secQuestion').value,
+                answer: document.getElementById('secAnswer').value
+            }
+        };
+
+        // 2. Add Business Details only if applicable
+        if (userType === 'BUSINESS') {
+            payload.businessName = document.getElementById('businessName').value;
+            payload.businessType = document.getElementById('businessType').value;
+            payload.panNumber = document.getElementById('panNumber').value;
+            payload.address = document.getElementById('address').value;
+            payload.verificationDocument = document.getElementById('verificationDocument').value;
+        }
+
+        const alertBox = document.getElementById('messageAlert');
+
+        // 3. Send to AuthController
+        fetch('/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success) {
+                alertBox.className = 'alert alert-success';
+                alertBox.textContent = "Registration successful! Redirecting to login...";
+                alertBox.classList.remove('d-none');
+
+                setTimeout(() => window.location.href = '/login', 2000);
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = data.message || "Registration failed.";
+                alertBox.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Server error. Please check backend logs.";
+            alertBox.classList.remove('d-none');
+        });
+    });
+</script>
+</body>
+</html>

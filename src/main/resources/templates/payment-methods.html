@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Linked Accounts')}"></head>
+<body class="bg-light">
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">Linked Accounts</h2>
+        <button class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addMethodModal">+ Add New</button>
+    </div>
+
+    <div class="row" id="methodsContainer">
+        <div class="col-12 text-center py-5 text-muted" id="loadingText">Loading your saved methods...</div>
+    </div>
+</div>
+
+<div class="modal fade" id="addMethodModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold">Add Payment Method</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="methodAlert" class="alert d-none"></div>
+
+                <form id="addMethodForm">
+                    <div class="mb-4 d-flex justify-content-center">
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="methodType" id="typeCard" value="CARD" checked autocomplete="off" onchange="toggleFormFields()">
+                            <label class="btn btn-outline-primary fw-bold" for="typeCard">💳 Credit/Debit Card</label>
+
+                            <input type="radio" class="btn-check" name="methodType" id="typeBank" value="BANK" autocomplete="off" onchange="toggleFormFields()">
+                            <label class="btn btn-outline-primary fw-bold" for="typeBank">🏦 Bank Account</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Account/Card Nickname</label>
+                        <input type="text" id="pmName" class="form-control" placeholder="e.g. Personal Visa, HDFC Savings" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Billing Address</label>
+                        <input type="text" id="pmAddress" class="form-control" placeholder="Street, City, Zip" required>
+                    </div>
+
+                    <div id="cardFields">
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Card Number</label>
+                            <input type="text" id="pmCardNumber" class="form-control" placeholder="16-digit card number" minlength="12">
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold">Expiry Date</label>
+                                <input type="date" id="pmExpiry" class="form-control">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted fw-bold">CVV</label>
+                                <input type="password" id="pmCvv" class="form-control text-center" placeholder="***" maxlength="3">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="bankFields" class="d-none">
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Account Number</label>
+                            <input type="text" id="pmAccountNumber" class="form-control" placeholder="Full Account Number">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">IFSC Code</label>
+                            <input type="text" id="pmIfsc" class="form-control text-uppercase" placeholder="e.g. HDFC0001234">
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mb-4 mt-3">
+                        <input class="form-check-input" type="checkbox" id="pmDefault">
+                        <label class="form-check-label fw-bold text-muted" for="pmDefault">Set as Default Payment Method</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-lg" id="saveBtn">Save Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) { window.location.href = '/login'; return; }
+        loadPaymentMethods();
+    });
+
+    // 1. TOGGLE FORM FIELDS BASED ON RADIO BUTTON
+    function toggleFormFields() {
+        const isCard = document.getElementById('typeCard').checked;
+        const cardFields = document.getElementById('cardFields');
+        const bankFields = document.getElementById('bankFields');
+
+        if (isCard) {
+            cardFields.classList.remove('d-none');
+            bankFields.classList.add('d-none');
+
+            // Add required logic for Card
+            document.getElementById('pmCardNumber').required = true;
+            document.getElementById('pmAccountNumber').required = false;
+            document.getElementById('pmIfsc').required = false;
+        } else {
+            cardFields.classList.add('d-none');
+            bankFields.classList.remove('d-none');
+
+            // Add required logic for Bank
+            document.getElementById('pmCardNumber').required = false;
+            document.getElementById('pmAccountNumber').required = true;
+            document.getElementById('pmIfsc').required = true;
+        }
+    }
+
+    // 2. FETCH AND DISPLAY METHODS
+    function loadPaymentMethods() {
+        const container = document.getElementById('methodsContainer');
+
+        fetch(`/payment-methods/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
+                const methods = data.data || data;
+
+                if (!methods || methods.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center py-5 text-muted">No linked accounts found.</div>';
+                    return;
+                }
+
+                methods.forEach(pm => {
+                    const isDefault = pm.isDefault === 'YES';
+                    const defaultBadge = isDefault ? '<span class="badge bg-success mb-2">DEFAULT</span>' : '';
+
+                    let cardContent = '';
+                    let bgClass = '';
+
+                    if (pm.methodType === 'CARD') {
+                        bgClass = 'bg-dark text-white';
+                        cardContent = `
+                            <div class="d-flex justify-content-between">
+                                <h5 class="fw-bold mb-0">💳 ${pm.paymentName}</h5>
+                                ${defaultBadge}
+                            </div>
+                            <h4 class="mt-4 mb-3 tracking-widest">**** **** **** ${pm.last4}</h4>
+                            <div class="d-flex justify-content-between opacity-75 small text-uppercase">
+                                <span>Valid Thru: ${pm.expiryDate}</span>
+                                <span>CVV: ***</span>
+                            </div>
+                        `;
+                    } else {
+                        bgClass = 'bg-primary text-white';
+                        cardContent = `
+                            <div class="d-flex justify-content-between">
+                                <h5 class="fw-bold mb-0">🏦 ${pm.paymentName}</h5>
+                                ${defaultBadge}
+                            </div>
+                            <div class="mt-4 mb-2 small opacity-75 text-uppercase">IFSC Code</div>
+                            <h5 class="fw-bold tracking-widest">${pm.ifscCode}</h5>
+                            <div class="mt-3 small opacity-75">Bank Transfer Enabled</div>
+                        `;
+                    }
+
+                    const defaultAction = isDefault ? '' : `<button class="btn btn-sm btn-light fw-bold" onclick="setDefault(${pm.pmId})">Set Default</button>`;
+
+                    container.innerHTML += `
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card shadow-sm border-0 rounded-4 ${bgClass} h-100">
+                                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                                    <div>${cardContent}</div>
+                                    <div class="d-flex justify-content-between align-items-end mt-4 pt-3 border-top border-light border-opacity-25">
+                                        ${defaultAction}
+                                        <button class="btn btn-sm btn-outline-light text-danger fw-bold ms-auto" onclick="deleteMethod(${pm.pmId})">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+    }
+
+    // 3. SUBMIT NEW METHOD
+    document.getElementById('addMethodForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const alertBox = document.getElementById('methodAlert');
+        const btn = document.getElementById('saveBtn');
+        const isCard = document.getElementById('typeCard').checked;
+
+        // Billing address is now always included!
+        const payload = {
+            userId: parseInt(userId),
+            methodType: isCard ? 'CARD' : 'BANK',
+            paymentName: document.getElementById('pmName').value,
+            billingAddress: document.getElementById('pmAddress').value,
+            isDefault: document.getElementById('pmDefault').checked
+        };
+
+        // Inject fields based on what the backend validation expects
+        if (isCard) {
+            payload.cardNumber = document.getElementById('pmCardNumber').value;
+            payload.expiryDate = document.getElementById('pmExpiry').value;
+            payload.cvv = document.getElementById('pmCvv').value;
+        } else {
+            payload.accountNumber = document.getElementById('pmAccountNumber').value;
+            payload.ifscCode = document.getElementById('pmIfsc').value;
+        }
+
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        fetch('/payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Save Account';
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addMethodModal')).hide();
+                document.getElementById('addMethodForm').reset();
+                // Reset to default state
+                document.getElementById('typeCard').checked = true;
+                toggleFormFields();
+                loadPaymentMethods();
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = data.message || "Failed to add method.";
+                alertBox.classList.remove('d-none');
+            }
+        }).catch(() => {
+            btn.disabled = false; btn.textContent = 'Save Account';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Server error occurred.";
+            alertBox.classList.remove('d-none');
+        });
+    });
+
+    // 4. ACTION BUTTONS
+    function setDefault(pmId) {
+        fetch(`/payment-methods/${userId}/${pmId}/default`, { method: 'POST' })
+            .then(() => loadPaymentMethods());
+    }
+
+    function deleteMethod(pmId) {
+        if (confirm("Are you sure you want to remove this linked account?")) {
+            fetch(`/payment-methods/${userId}/${pmId}`, { method: 'DELETE' })
+                .then(() => loadPaymentMethods());
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ public class InvoiceItem {
     @Column(name = "ITEM_ID")
     private Long itemId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "INVOICE_ID")
     private Invoice invoice;

@@ -2,6 +2,7 @@ package com.revpay.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ public class Notification {
     @Column(name = "NOTIFICATION_ID")
     private Long notificationId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User user;

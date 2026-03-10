@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Invoices')}"></head>
+
+<body class="bg-light">
+
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">Invoice Hub</h2>
+        <button class="btn btn-outline-primary fw-bold bg-white" onclick="initInvoicePage()">🔄 Refresh</button>
+    </div>
+
+    <div id="businessSection" class="d-none mb-5">
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 rounded-4 bg-success text-white">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold mb-1 text-uppercase opacity-75">Total Paid</h6>
+                        <h2 class="fw-bold mb-0" id="sumPaid">₹0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 rounded-4 bg-warning text-dark">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold mb-1 text-uppercase opacity-75">Total Pending</h6>
+                        <h2 class="fw-bold mb-0" id="sumPending">₹0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 rounded-4 bg-danger text-white">
+                    <div class="card-body p-4 text-center">
+                        <h6 class="fw-bold mb-1 text-uppercase opacity-75">Total Overdue</h6>
+                        <h2 class="fw-bold mb-0" id="sumOverdue">₹0.00</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-dark text-white border-0 pt-3 pb-3 rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0">📤 Invoices Issued (Your Bills)</h5>
+                <button class="btn btn-primary btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">+ Create Invoice</button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                        <tr class="text-muted small text-uppercase">
+                            <th class="ps-4">ID</th>
+                            <th>Customer</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="issuedInvoicesBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4">Loading issued invoices...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customerSection">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-bottom pt-3 pb-3 rounded-top-4">
+                <h5 class="fw-bold text-secondary mb-0">📥 Invoices Received (Bills to Pay)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                        <tr class="text-muted small text-uppercase">
+                            <th class="ps-4">ID</th>
+                            <th>From Business</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-center pe-4">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="receivedInvoicesBody">
+                        <tr><td colspan="6" class="text-center text-muted py-4">Loading received invoices...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="createInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold">Create New Invoice</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="createAlert" class="alert d-none"></div>
+                <form id="createInvoiceForm">
+
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Customer RevPay ID</label>
+                            <input type="number" id="invCustomerId" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Customer Name</label>
+                            <input type="text" id="invCustomerName" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Due Date</label>
+                            <input type="date" id="invDueDate" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="fw-bold text-secondary mb-3">Line Items</h6>
+                    <div id="itemsContainer">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-dark fw-bold mb-4" onclick="addInvoiceItemRow()">+ Add Another Item</button>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-lg" id="createBtn">Save as Draft</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="payInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-primary">Pay Invoice</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="payAlert" class="alert d-none"></div>
+                <form id="payInvoiceForm">
+                    <input type="hidden" id="payInvoiceId">
+
+                    <div class="text-center mb-4">
+                        <p class="text-muted mb-1">Amount Due</p>
+                        <h2 class="fw-bold text-danger" id="payAmountDisplay">₹0.00</h2>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold text-danger">4-Digit Txn PIN</label>
+                        <input type="password" id="payPin" class="form-control form-control-lg border-danger text-center" pattern="\d{4}" placeholder="****" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold btn-lg" id="payBtn">Confirm Payment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+    let currentUserType = 'PERSONAL';
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) {
+            window.location.href = '/login';
+            return;
+        }
+        initInvoicePage();
+        // Add at least one row to the create form automatically
+        addInvoiceItemRow();
+    });
+
+    function initInvoicePage() {
+        // 1. Fetch user to check if they are BUSINESS or PERSONAL
+        fetch(`/users/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success || data.userId) {
+                    const user = data.data || data;
+                    currentUserType = user.userType;
+
+                    if (currentUserType === 'BUSINESS') {
+                        document.getElementById('businessSection').classList.remove('d-none');
+                        loadBusinessSummary();
+                        loadBusinessInvoices();
+                    }
+                    // Everyone can receive invoices
+                    loadCustomerInvoices();
+                }
+            });
+    }
+
+    // ==========================================
+    // FETCH DATA FUNCTIONS
+    // ==========================================
+
+    function loadBusinessSummary() {
+        fetch(`/invoices/summary/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data) {
+                    const s = data.data;
+                    document.getElementById('sumPaid').textContent = '₹' + parseFloat(s.totalPaid || 0).toLocaleString('en-IN');
+                    document.getElementById('sumPending').textContent = '₹' + parseFloat(s.totalPending || 0).toLocaleString('en-IN');
+                    document.getElementById('sumOverdue').textContent = '₹' + parseFloat(s.totalOverdue || 0).toLocaleString('en-IN');
+                }
+            });
+    }
+
+    function loadBusinessInvoices() {
+        const tbody = document.getElementById('issuedInvoicesBody');
+        fetch(`/invoices/business/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    renderInvoices(data.data, tbody, 'issued');
+                }
+            });
+    }
+
+    function loadCustomerInvoices() {
+        const tbody = document.getElementById('receivedInvoicesBody');
+        fetch(`/invoices/customer/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    renderInvoices(data.data, tbody, 'received');
+                }
+            });
+    }
+
+    function renderInvoices(invoices, tbody, type) {
+        tbody.innerHTML = '';
+        if(!invoices || invoices.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">No ${type} invoices found.</td></tr>`;
+            return;
+        }
+
+        invoices.forEach(inv => {
+            let badgeClass = 'bg-secondary';
+            if(inv.status === 'SENT') badgeClass = 'bg-primary';
+            if(inv.status === 'PAID') badgeClass = 'bg-success';
+            if(inv.status === 'OVERDUE') badgeClass = 'bg-danger';
+            if(inv.status === 'CANCELLED') badgeClass = 'bg-dark';
+
+            const amt = parseFloat(inv.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:2});
+            let otherParty = 'Unknown';
+            if (type === 'issued') {
+                otherParty = inv.customerName;
+            } else {
+                // Try to get the actual Business Name first, then fallback to the Owner's Name
+                if (inv.business && inv.business.businessProfile && inv.business.businessProfile.businessName) {
+                    otherParty = inv.business.businessProfile.businessName;
+                } else if (inv.business) {
+                    otherParty = inv.business.fullName;
+                }
+            }
+
+            let actions = '';
+            if(type === 'issued') {
+                if(inv.status === 'DRAFT') {
+                    actions = `<button class="btn btn-sm btn-primary me-1" onclick="sendInvoice(${inv.invoiceId})">Send</button>
+                               <button class="btn btn-sm btn-outline-danger" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
+                } else if(inv.status === 'SENT' || inv.status === 'OVERDUE') {
+                    actions = `<button class="btn btn-sm btn-outline-danger" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
+                } else {
+                    actions = `<span class="text-muted small">No actions</span>`;
+                }
+            } else if(type === 'received') {
+                if(inv.status === 'SENT' || inv.status === 'OVERDUE') {
+                    actions = `<button class="btn btn-sm btn-success fw-bold px-3" onclick="openPayModal(${inv.invoiceId}, ${inv.totalAmount})">Pay Now</button>`;
+                } else {
+                    actions = `<span class="text-muted small">No actions</span>`;
+                }
+            }
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="ps-4 fw-bold text-muted">#${inv.invoiceId}</td>
+                <td class="fw-semibold">${otherParty}</td>
+                <td>${inv.dueDate}</td>
+                <td><span class="badge ${badgeClass}">${inv.status}</span></td>
+                <td class="text-end fw-bold">₹${amt}</td>
+                <td class="text-center pe-4">${actions}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ==========================================
+    // CREATE INVOICE LOGIC
+    // ==========================================
+
+    function addInvoiceItemRow() {
+        const container = document.getElementById('itemsContainer');
+        const row = document.createElement('div');
+        row.className = 'row mb-2 item-row';
+        row.innerHTML = `
+            <div class="col-md-5"><input type="text" class="form-control item-name" placeholder="Item Description" required></div>
+            <div class="col-md-3"><input type="number" class="form-control item-qty" placeholder="Qty" required min="1"></div>
+            <div class="col-md-3"><input type="number" class="form-control item-price" placeholder="Price (₹)" step="0.01" required min="0.01"></div>
+            <div class="col-md-1"><button type="button" class="btn btn-danger w-100 fw-bold" onclick="this.parentElement.parentElement.remove()">X</button></div>
+        `;
+        container.appendChild(row);
+    }
+
+    document.getElementById('createInvoiceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('createBtn');
+        const alertBox = document.getElementById('createAlert');
+
+        // Gather Dynamic Items
+        const itemRows = document.querySelectorAll('.item-row');
+        const itemsList = Array.from(itemRows).map(row => ({
+            itemName: row.querySelector('.item-name').value,
+            quantity: parseInt(row.querySelector('.item-qty').value),
+            price: parseFloat(row.querySelector('.item-price').value)
+        }));
+
+        if(itemsList.length === 0) {
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Please add at least one item.";
+            alertBox.classList.remove('d-none');
+            return;
+        }
+
+        const payload = {
+            businessId: parseInt(userId),
+            customerId: parseInt(document.getElementById('invCustomerId').value),
+            customerName: document.getElementById('invCustomerName').value,
+            dueDate: document.getElementById('invDueDate').value,
+            items: itemsList
+        };
+
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+
+        fetch('/invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = "Save as Draft";
+            if(data.success) {
+                const modalEl = document.getElementById('createInvoiceModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                document.getElementById('createInvoiceForm').reset();
+                initInvoicePage(); // Refresh data
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = data.message || "Failed to create invoice.";
+                alertBox.classList.remove('d-none');
+            }
+        }).catch(err => {
+            btn.disabled = false;
+            btn.textContent = "Save as Draft";
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Server error.";
+            alertBox.classList.remove('d-none');
+        });
+    });
+
+    // ==========================================
+    // ACTION BUTTON LOGIC
+    // ==========================================
+
+    function sendInvoice(invoiceId) {
+        if(!confirm("Send this invoice to the customer?")) return;
+        fetch(`/invoices/${invoiceId}/send`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) initInvoicePage();
+                else alert(data.message);
+            });
+    }
+
+    function cancelInvoice(invoiceId) {
+        if(!confirm("Are you sure you want to cancel this invoice?")) return;
+        fetch(`/invoices/${invoiceId}/cancel`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) initInvoicePage();
+                else alert(data.message);
+            });
+    }
+
+    function openPayModal(invoiceId, amount) {
+        document.getElementById('payInvoiceId').value = invoiceId;
+        document.getElementById('payAmountDisplay').textContent = '₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+        document.getElementById('payAlert').classList.add('d-none');
+        document.getElementById('payPin').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('payInvoiceModal'));
+        modal.show();
+    }
+
+    document.getElementById('payInvoiceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const invoiceId = document.getElementById('payInvoiceId').value;
+        const pin = document.getElementById('payPin').value;
+        const btn = document.getElementById('payBtn');
+        const alertBox = document.getElementById('payAlert');
+
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+
+        fetch(`/invoices/${invoiceId}/pay?customerId=${userId}&transactionPin=${encodeURIComponent(pin)}`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = "Confirm Payment";
+            if(data.success) {
+                const modalEl = document.getElementById('payInvoiceModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+                initInvoicePage();
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = data.message || "Payment failed.";
+                alertBox.classList.remove('d-none');
+            }
+        }).catch(err => {
+            btn.disabled = false;
+            btn.textContent = "Confirm Payment";
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Server error.";
+            alertBox.classList.remove('d-none');
+        });
+    });
+
+</script>
+</body>
+</html>

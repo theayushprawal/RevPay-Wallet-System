@@ -2,6 +2,7 @@ package com.revpay.model;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revpay.model.enums.PaymentMethodType;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
@@ -16,6 +17,7 @@ public class PaymentMethod {
     @Column(name = "PM_ID")
     private Long pmId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "USER_ID")
     private User user;

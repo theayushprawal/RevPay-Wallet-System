@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Login')}"></head>
+<body class="bg-light d-flex align-items-center min-vh-100">
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="text-center mb-4">
+                <h1 class="fw-bold text-primary display-5">RevPay</h1>
+                <p class="text-muted">Sign in to your digital wallet</p>
+            </div>
+
+            <div class="card shadow border-0 rounded-4">
+                <div class="card-body p-5">
+                    <div id="loginAlert" class="alert d-none"></div>
+
+                    <form id="loginForm">
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold">Email or Phone</label>
+                            <input type="text" id="loginId" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label text-muted fw-bold mb-0">Password</label>
+                                <a href="#" class="text-decoration-none small fw-bold" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
+                            </div>
+                            <input type="password" id="password" class="form-control form-control-lg mt-2" required>
+                        </div>
+
+                        <button type="submit" id="loginBtn" class="btn btn-primary btn-lg w-100 fw-bold mb-3">Sign In</button>
+
+                        <div class="text-center mt-4">
+                            <span class="text-muted">Don't have an account?</span>
+                            <a href="/register" class="text-decoration-none fw-bold">Register here</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold">Account Recovery</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="resetFpModal()"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div id="fpAlert" class="alert d-none"></div>
+
+                <div id="fpStep1">
+                    <p class="text-muted mb-3">Enter your registered Email or Phone number to retrieve your security question.</p>
+                    <div class="mb-3">
+                        <input type="text" id="fpLoginId" class="form-control form-control-lg" placeholder="Email or Phone">
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 fw-bold" id="fpBtn1" onclick="fetchSecurityQuestion()">Next ➔</button>
+                </div>
+
+                <div id="fpStep2" class="d-none">
+                    <p class="text-muted mb-3">Please answer your security question to verify your identity.</p>
+                    <div class="alert alert-info border-0 shadow-sm fw-bold mb-3" id="fpQuestionText">
+                        Loading question...
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" id="fpAnswer" class="form-control form-control-lg" placeholder="Your Answer">
+                    </div>
+                    <button type="button" class="btn btn-success w-100 fw-bold" id="fpBtn2" onclick="verifySecurityAnswer()">Verify Answer ➔</button>
+                </div>
+
+                <div id="fpStep3" class="d-none">
+                    <p class="text-success fw-bold mb-3">Identity verified! Please set a new password.</p>
+                    <div class="mb-3">
+                        <input type="password" id="fpNewPassword" class="form-control form-control-lg" placeholder="New Password" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="fpConfirmPassword" class="form-control form-control-lg" placeholder="Confirm New Password" required>
+                    </div>
+                    <button type="button" class="btn btn-danger w-100 fw-bold" id="fpBtn3" onclick="resetPassword()">Reset Password</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    // ==========================================
+    // 1. STANDARD LOGIN LOGIC
+    // ==========================================
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const alertBox = document.getElementById('loginAlert');
+        const loginId = document.getElementById('loginId').value;
+        const password = document.getElementById('password').value;
+
+        btn.disabled = true; btn.textContent = 'Authenticating...';
+
+        fetch(`/auth/login?loginId=${encodeURIComponent(loginId)}&password=${encodeURIComponent(password)}`, {
+            method: 'POST'
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Sign In';
+            if (data.success) {
+                localStorage.setItem('userId', data.data); // data.data contains the userId
+                window.location.href = '/dashboard';
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = data.message || "Invalid credentials.";
+                alertBox.classList.remove('d-none');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false; btn.textContent = 'Sign In';
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = "Server connection error.";
+            alertBox.classList.remove('d-none');
+        });
+    });
+
+    // ==========================================
+    // 2. FORGOT PASSWORD LOGIC (3 STEPS)
+    // ==========================================
+    let currentFpLoginId = '';
+    let currentFpUserId = null;
+
+    function showFpAlert(msg, isSuccess = false) {
+        const alertBox = document.getElementById('fpAlert');
+        alertBox.className = isSuccess ? 'alert alert-success' : 'alert alert-danger';
+        alertBox.textContent = msg;
+        alertBox.classList.remove('d-none');
+    }
+
+    function hideFpAlert() {
+        document.getElementById('fpAlert').classList.add('d-none');
+    }
+
+    // STEP 1: Fetch Question
+    function fetchSecurityQuestion() {
+        hideFpAlert();
+        const loginId = document.getElementById('fpLoginId').value;
+        if(!loginId) { showFpAlert("Please enter your Email or Phone."); return; }
+
+        const btn = document.getElementById('fpBtn1');
+        btn.disabled = true; btn.textContent = "Searching...";
+
+        fetch(`/auth/forgot-password/question?loginId=${encodeURIComponent(loginId)}`)
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false; btn.textContent = "Next ➔";
+                if(data.success) {
+                    currentFpLoginId = loginId;
+                    document.getElementById('fpQuestionText').textContent = data.data;
+                    document.getElementById('fpStep1').classList.add('d-none');
+                    document.getElementById('fpStep2').classList.remove('d-none');
+                } else {
+                    showFpAlert(data.message || "User not found.");
+                }
+            }).catch(() => { btn.disabled = false; btn.textContent = "Next ➔"; showFpAlert("Server error."); });
+    }
+
+    // STEP 2: Verify Answer
+    function verifySecurityAnswer() {
+        hideFpAlert();
+        const answer = document.getElementById('fpAnswer').value;
+        if(!answer) { showFpAlert("Please enter your answer."); return; }
+
+        const btn = document.getElementById('fpBtn2');
+        btn.disabled = true; btn.textContent = "Verifying...";
+
+        fetch(`/auth/forgot-password/verify?loginId=${encodeURIComponent(currentFpLoginId)}&answer=${encodeURIComponent(answer)}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false; btn.textContent = "Verify Answer ➔";
+                if(data.success) {
+                    currentFpUserId = data.data; // The verify endpoint returns the userId
+                    document.getElementById('fpStep2').classList.add('d-none');
+                    document.getElementById('fpStep3').classList.remove('d-none');
+                } else {
+                    showFpAlert(data.message || "Incorrect answer.");
+                }
+            }).catch(() => { btn.disabled = false; btn.textContent = "Verify Answer ➔"; showFpAlert("Server error."); });
+    }
+
+    // STEP 3: Reset Password
+    function resetPassword() {
+        hideFpAlert();
+        const pwd = document.getElementById('fpNewPassword').value;
+        const confirmPwd = document.getElementById('fpConfirmPassword').value;
+
+        if(!pwd || !confirmPwd) { showFpAlert("Please fill in both fields."); return; }
+        if(pwd !== confirmPwd) { showFpAlert("Passwords do not match."); return; }
+
+        const btn = document.getElementById('fpBtn3');
+        btn.disabled = true; btn.textContent = "Resetting...";
+
+        fetch(`/auth/forgot-password/reset?userId=${currentFpUserId}&newPassword=${encodeURIComponent(pwd)}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false; btn.textContent = "Reset Password";
+                if(data.success) {
+                    // Success! Close modal and show success on main login screen
+                    bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal')).hide();
+                    resetFpModal();
+
+                    const mainAlert = document.getElementById('loginAlert');
+                    mainAlert.className = 'alert alert-success mt-3';
+                    mainAlert.textContent = "Password reset successfully! You can now log in.";
+                    mainAlert.classList.remove('d-none');
+                } else {
+                    showFpAlert(data.message || "Failed to reset password.");
+                }
+            }).catch(() => { btn.disabled = false; btn.textContent = "Reset Password"; showFpAlert("Server error."); });
+    }
+
+    // Helper to reset modal state when closed
+    function resetFpModal() {
+        hideFpAlert();
+        document.getElementById('fpStep1').classList.remove('d-none');
+        document.getElementById('fpStep2').classList.add('d-none');
+        document.getElementById('fpStep3').classList.add('d-none');
+        document.getElementById('fpLoginId').value = '';
+        document.getElementById('fpAnswer').value = '';
+        document.getElementById('fpNewPassword').value = '';
+        document.getElementById('fpConfirmPassword').value = '';
+        currentFpLoginId = '';
+        currentFpUserId = null;
+    }
+</script>
+</body>
+</html>

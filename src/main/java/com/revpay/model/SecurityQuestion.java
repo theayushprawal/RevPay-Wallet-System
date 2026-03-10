@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -12,6 +13,7 @@ public class SecurityQuestion {
     @Column(name = "SQ_ID")
     private Long sqId;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "USER_ID", unique = true)
     private User user;

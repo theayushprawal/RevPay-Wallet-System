@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Dashboard')}"></head>
+
+<body class="bg-light">
+
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">Overview</h2>
+        <h5 class="text-muted fw-semibold" id="welcomeMessage">Welcome back!</h5>
+    </div>
+
+    <div id="dashboardAlert" class="alert d-none"></div>
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+
+            <div class="card shadow border-0 rounded-4 bg-dark text-white mb-3">
+                <div class="card-body p-4 position-relative overflow-hidden">
+                    <div class="position-absolute top-0 end-0 p-3 opacity-25" style="font-size: 4rem; transform: translate(10px, -20px);">💳</div>
+                    <p class="text-uppercase tracking-widest small mb-1 opacity-75 fw-bold">Available Balance</p>
+                    <h1 class="fw-bold display-5 mb-4" id="walletBalance">₹0.00</h1>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light fw-bold w-100 shadow-sm" data-bs-toggle="modal" data-bs-target="#depositModal">➕ Add</button>
+                        <button class="btn btn-outline-light fw-bold w-100" data-bs-toggle="modal" data-bs-target="#withdrawModal">🏦 Withdraw</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <button class="btn btn-primary w-100 fw-bold py-3 rounded-4 shadow-sm d-flex flex-column align-items-center" data-bs-toggle="modal" data-bs-target="#sendMoneyModal">
+                        <span class="fs-4 mb-1">💸</span>
+                        Send Money
+                    </button>
+                </div>
+                <div class="col-6">
+                    <a href="/requests" class="btn btn-success w-100 fw-bold py-3 rounded-4 shadow-sm d-flex flex-column align-items-center">
+                        <span class="fs-4 mb-1">🤲</span>
+                        Request Money
+                    </a>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white text-center p-3">
+                        <h3 class="fw-bold text-warning mb-0" id="pendingCount">0</h3>
+                        <p class="small text-muted mb-0 fw-bold text-uppercase mt-1">Pending Req</p>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card shadow-sm border-0 rounded-4 bg-white text-center p-3">
+                        <h3 class="fw-bold text-danger mb-0" id="unreadCount">0</h3>
+                        <p class="small text-muted mb-0 fw-bold text-uppercase mt-1">Unread Alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-secondary mb-0">Recent Transactions</h5>
+                    <a href="/transactions" class="btn btn-sm btn-outline-primary fw-bold px-3 shadow-sm">View All Transactions</a>
+                </div>
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                            <tr class="text-muted small text-uppercase">
+                                <th class="ps-4">Date</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Amount</th>
+                            </tr>
+                            </thead>
+                            <tbody id="recentTxnBody">
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Loading recent activity...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="sendMoneyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold">💸 Send Money</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="transferAlert" class="alert d-none" role="alert"></div>
+                <form id="sendMoneyForm">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Send To</label>
+                        <input type="text" id="receiverInput" class="form-control form-control-lg" placeholder="Email, Phone, or Account ID" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Amount (₹)</label>
+                        <input type="number" step="0.01" id="amount" class="form-control form-control-lg" placeholder="0.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Remarks (Optional)</label>
+                        <input type="text" id="remarks" class="form-control" placeholder="What's this for?">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold text-danger">4-Digit Txn PIN</label>
+                        <input type="password" id="transactionPin" class="form-control form-control-lg border-danger text-center tracking-widest" pattern="\d{4}" maxlength="4" placeholder="****" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold" id="sendBtn">Authorize Transfer</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="depositModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold text-dark">Add Funds</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><form id="depositForm"><div class="mb-3"><input type="number" id="depAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required></div><div class="mb-4"><input type="password" id="depPin" class="form-control text-center tracking-widest bg-light" pattern="\d{4}" maxlength="4" placeholder="PIN" required></div><button type="submit" id="depBtn" class="btn btn-success w-100 fw-bold btn-lg">Deposit</button></form></div></div></div></div>
+<div class="modal fade" id="withdrawModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold text-dark">Withdraw</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><form id="withdrawForm"><div class="mb-3"><input type="number" id="withAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required></div><div class="mb-4"><input type="password" id="withPin" class="form-control text-center tracking-widest bg-light border-danger" pattern="\d{4}" maxlength="4" placeholder="PIN" required></div><button type="submit" id="withBtn" class="btn btn-danger w-100 fw-bold btn-lg">Withdraw</button></form></div></div></div></div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) { window.location.href = '/login'; return; }
+        fetch(`/users/${userId}`).then(res => res.json()).then(data => { if(data.success) document.getElementById('welcomeMessage').textContent = `Welcome back, ${data.data.fullName.split(' ')[0]}!`; });
+
+        loadDashboardStats();
+        loadRecentTransactions(); // Fetch transactions independently!
+    });
+
+    function showAlert(msg, isSuccess) {
+        const box = document.getElementById('dashboardAlert');
+        box.className = `alert alert-${isSuccess ? 'success' : 'danger'} mb-4 shadow-sm border-0`;
+        box.textContent = msg; box.classList.remove('d-none');
+        setTimeout(() => box.classList.add('d-none'), 4000);
+    }
+
+    // 1. Fetch only Wallet Balance and Counters from Dashboard API
+    function loadDashboardStats() {
+        fetch(`/dashboard/summary?userId=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.data) {
+                    const summary = data.data;
+                    document.getElementById('walletBalance').textContent = '₹' + parseFloat(summary.walletBalance || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    document.getElementById('pendingCount').textContent = (summary.pendingRequests || []).length;
+                    document.getElementById('unreadCount').textContent = summary.unreadNotifications || 0;
+                }
+            });
+    }
+
+    // 2. NEW: Fetch ALL history independently and slice top 5
+    function loadRecentTransactions() {
+        fetch(`/transactions/history/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('recentTxnBody');
+                tbody.innerHTML = '';
+
+                if (data.success && data.data) {
+                    let txns = data.data;
+
+                    // Apply double entry fix
+                    let myTxns = txns.filter(txn => {
+                        const myId = String(userId);
+                        if (txn.txnType === 'SEND') return myId === (txn.sender ? String(txn.sender.userId) : null);
+                        if (txn.txnType === 'RECEIVE') return myId === (txn.receiver ? String(txn.receiver.userId) : null);
+                        return true;
+                    });
+
+                    // Sort newest to oldest just to be safe
+                    myTxns.sort((a, b) => new Date(b.txnDate) - new Date(a.txnDate));
+
+                    // Slice exactly up to 5
+                    myTxns = myTxns.slice(0, 5);
+
+                    if(myTxns.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No recent transactions.</td></tr>';
+                        return;
+                    }
+
+                    myTxns.forEach(txn => {
+                        let badge = txn.status === 'SUCCESS' ? 'bg-success' : (txn.status === 'FAILED' ? 'bg-danger' : 'bg-warning text-dark');
+                        let amtColor = 'text-dark'; let sign = '';
+                        if (['SEND', 'WITHDRAW', 'LOAN_REPAYMENT'].includes(txn.txnType)) { amtColor = 'text-danger'; sign = '-'; }
+                        else if (['RECEIVE', 'DEPOSIT', 'LOAN_CREDIT'].includes(txn.txnType)) { amtColor = 'text-success'; sign = '+'; }
+
+                        const dateStr = new Date(txn.txnDate).toLocaleDateString('en-IN', {month: 'short', day: 'numeric'});
+                        const amt = parseFloat(txn.amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="ps-4 fw-bold text-muted">${dateStr}</td>
+                                <td><span class="small fw-bold text-secondary border px-2 py-1 rounded bg-white shadow-sm">${txn.txnType.replace('_', ' ')}</span></td>
+                                <td><span class="badge ${badge}">${txn.status}</span></td>
+                                <td class="text-end pe-4 fw-bold ${amtColor}">${sign}₹${amt}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No recent transactions.</td></tr>';
+                }
+            });
+    }
+
+    // --- SEND MONEY LOGIC ---
+    document.getElementById('sendMoneyForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const receiverInput = document.getElementById('receiverInput').value.trim();
+        const amount = document.getElementById('amount').value;
+        const remarks = document.getElementById('remarks').value;
+        const transactionPin = document.getElementById('transactionPin').value;
+        const alertBox = document.getElementById('transferAlert');
+        const btn = document.getElementById('sendBtn');
+
+        btn.disabled = true; btn.textContent = "Looking up user..."; alertBox.classList.add('d-none');
+
+        try {
+            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(receiverInput)}`);
+            const lookupData = await lookupRes.json();
+
+            if (!lookupData.success) {
+                btn.disabled = false; btn.textContent = "Authorize Transfer";
+                alertBox.className = 'alert alert-warning'; alertBox.textContent = "Could not find a user with that Email, Phone, or ID."; alertBox.classList.remove('d-none');
+                return;
+            }
+
+            const resolvedReceiverId = lookupData.data;
+            if(resolvedReceiverId == userId) {
+                 btn.disabled = false; btn.textContent = "Authorize Transfer";
+                 alertBox.className = 'alert alert-warning'; alertBox.textContent = "You cannot send money to yourself."; alertBox.classList.remove('d-none'); return;
+            }
+
+            btn.textContent = "Processing Transfer...";
+            const url = `/transactions/send?senderId=${userId}&receiverId=${resolvedReceiverId}&amount=${amount}&transactionPin=${encodeURIComponent(transactionPin)}&remarks=${encodeURIComponent(remarks)}`;
+
+            const sendRes = await fetch(url, { method: 'POST' });
+            const sendData = await sendRes.json();
+
+            btn.disabled = false; btn.textContent = "Authorize Transfer";
+
+            if (sendData.success) {
+                bootstrap.Modal.getInstance(document.getElementById('sendMoneyModal')).hide();
+                document.getElementById('sendMoneyForm').reset();
+                showAlert("Money sent successfully!", true);
+
+                // Refresh both the stats and the table independently!
+                loadDashboardStats();
+                loadRecentTransactions();
+            } else {
+                alertBox.className = 'alert alert-danger'; alertBox.textContent = sendData.message || "Transaction failed."; alertBox.classList.remove('d-none');
+            }
+        } catch (error) {
+            btn.disabled = false; btn.textContent = "Authorize Transfer";
+            alertBox.className = 'alert alert-danger'; alertBox.textContent = "Server error."; alertBox.classList.remove('d-none');
+        }
+    });
+
+    // --- DEPOSIT / WITHDRAW LOGIC ---
+    document.getElementById('depositForm').addEventListener('submit', function(e) { e.preventDefault(); const amt = document.getElementById('depAmount').value; const pin = document.getElementById('depPin').value; const btn = document.getElementById('depBtn'); btn.disabled = true; btn.textContent = 'Processing...'; fetch(`/wallet/deposit?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' }).then(res => res.json()).then(data => { btn.disabled = false; btn.textContent = 'Deposit'; if(data.success) { bootstrap.Modal.getInstance(document.getElementById('depositModal')).hide(); document.getElementById('depositForm').reset(); showAlert(`Added ₹${amt} to your wallet!`, true); loadDashboardStats(); loadRecentTransactions(); } else alert(data.message || 'Deposit failed'); }).catch(() => { btn.disabled = false; btn.textContent = 'Deposit'; }); });
+    document.getElementById('withdrawForm').addEventListener('submit', function(e) { e.preventDefault(); const amt = document.getElementById('withAmount').value; const pin = document.getElementById('withPin').value; const btn = document.getElementById('withBtn'); btn.disabled = true; btn.textContent = 'Processing...'; fetch(`/wallet/withdraw?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' }).then(res => res.json()).then(data => { btn.disabled = false; btn.textContent = 'Withdraw'; if(data.success) { bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide(); document.getElementById('withdrawForm').reset(); showAlert(`Withdrew ₹${amt}!`, true); loadDashboardStats(); loadRecentTransactions(); } else alert(data.message || 'Withdrawal failed.'); }).catch(() => { btn.disabled = false; btn.textContent = 'Withdraw'; }); });
+</script>
+</body>
+</html>

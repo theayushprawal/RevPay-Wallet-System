@@ -78,4 +78,10 @@ public class UserServiceImpl implements UserService {
             log.info("Business profile updated userId={}", user.getUserId());
         }
     }
+
+    @Override
+    public User getUserById(Long userId) {
+        // Fetches the user or returns null if they don't exist
+        return userRepository.findById(userId).orElse(null);
+    }
 }

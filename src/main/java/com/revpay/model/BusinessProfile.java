@@ -1,5 +1,6 @@
 package com.revpay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
 
@@ -11,6 +12,7 @@ public class BusinessProfile {
     @Column(name = "BUSINESS_ID")
     private Long businessId;
 
+    @JsonIgnore
     @OneToOne
     @MapsId
     @JoinColumn(name = "BUSINESS_ID")
