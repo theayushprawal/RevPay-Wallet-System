@@ -1,0 +1,230 @@
+package com.revpay.service.impl;
+
+import com.revpay.model.Transaction;
+import com.revpay.model.User;
+import com.revpay.model.Wallet;
+import com.revpay.model.enums.TransactionStatus;
+import com.revpay.model.enums.TransactionType;
+import com.revpay.model.enums.UserType;
+import com.revpay.repository.MoneyRequestRepository;
+import com.revpay.repository.TransactionRepository;
+import com.revpay.repository.UserRepository;
+import com.revpay.repository.WalletRepository;
+import com.revpay.service.AuthService;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class TransactionServiceImplTest {
+
+    @Mock
+    private TransactionRepository transactionRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private WalletRepository walletRepository;
+
+    @Mock
+    private AuthService authService;
+
+    @Mock
+    private MoneyRequestRepository moneyRequestRepository;
+
+    @InjectMocks
+    private TransactionServiceImpl transactionService;
+
+    private User sender;
+    private User receiver;
+    private Wallet senderWallet;
+    private Wallet receiverWallet;
+
+    @BeforeEach
+    void setUp() {
+
+        MockitoAnnotations.openMocks(this);
+
+        sender = new User();
+        sender.setUserId(1L);
+        sender.setFullName("Sender User");
+
+        receiver = new User();
+        receiver.setUserId(2L);
+        receiver.setFullName("Receiver User");
+
+        senderWallet = new Wallet();
+        senderWallet.setBalance(new BigDecimal("1000"));
+
+        receiverWallet = new Wallet();
+        receiverWallet.setBalance(new BigDecimal("500"));
+    }
+
+    @Test
+    void testSendMoneySuccess() {
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
+        when(authService.verifyTransactionPin(sender, "1234")).thenReturn(true);
+        when(walletRepository.findByUser(sender)).thenReturn(Optional.of(senderWallet));
+        when(walletRepository.findByUser(receiver)).thenReturn(Optional.of(receiverWallet));
+
+        transactionService.sendMoney(
+                1L,
+                2L,
+                new BigDecimal("200"),
+                "1234",
+                "Test transfer"
+        );
+
+        verify(walletRepository, times(2)).save(any(Wallet.class));
+        verify(transactionRepository, times(2)).save(any(Transaction.class));
+    }
+
+    @Test
+    void testSendMoneySameUser() {
+
+        assertThrows(IllegalArgumentException.class, () ->
+                transactionService.sendMoney(
+                        1L,
+                        1L,
+                        new BigDecimal("100"),
+                        "1234",
+                        "Invalid"
+                )
+        );
+    }
+
+    @Test
+    void testSendMoneyInvalidAmount() {
+
+        assertThrows(IllegalArgumentException.class, () ->
+                transactionService.sendMoney(
+                        1L,
+                        2L,
+                        new BigDecimal("0"),
+                        "1234",
+                        "Invalid"
+                )
+        );
+    }
+
+    @Test
+    void testSendMoneyInvalidPin() {
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
+        when(authService.verifyTransactionPin(sender, "1234")).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                transactionService.sendMoney(
+                        1L,
+                        2L,
+                        new BigDecimal("100"),
+                        "1234",
+                        "Invalid pin"
+                )
+        );
+    }
+
+    @Test
+    void testGetTransactionsForUser() {
+
+        Transaction txn = new Transaction();
+        txn.setTxnDate(LocalDateTime.now());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+        when(transactionRepository.findBySender(sender))
+                .thenReturn(List.of(txn));
+        when(transactionRepository.findByReceiver(sender))
+                .thenReturn(List.of());
+
+        List<Transaction> result =
+                transactionService.getTransactionsForUser(1L);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void testExportTransactionsToCsv() {
+
+        Transaction txn = new Transaction();
+        txn.setTxnId(10L);
+        txn.setSender(sender);
+        txn.setReceiver(receiver);
+        txn.setAmount(new BigDecimal("100"));
+        txn.setTxnType(TransactionType.SEND);
+        txn.setStatus(TransactionStatus.SUCCESS);
+        txn.setTxnDate(LocalDateTime.now());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+        when(transactionRepository.findBySenderOrReceiver(sender, sender))
+                .thenReturn(List.of(txn));
+
+        byte[] result = transactionService.exportTransactionsToCsv(1L);
+
+        assertNotNull(result);
+        assertTrue(new String(result).contains("TransactionId"));
+    }
+
+    @Test
+    void testGetTransactionSummary() {
+
+        when(transactionRepository.getTotalSent(1L))
+                .thenReturn(new BigDecimal("500"));
+
+        when(transactionRepository.getTotalReceived(1L))
+                .thenReturn(new BigDecimal("300"));
+
+        when(moneyRequestRepository.getPendingRequestAmount(1L))
+                .thenReturn(new BigDecimal("100"));
+
+        var summary = transactionService.getTransactionSummary(1L);
+
+        assertEquals(new BigDecimal("500"), summary.getTotalSent());
+        assertEquals(new BigDecimal("300"), summary.getTotalReceived());
+    }
+
+    @Test
+    void testGetTopCustomersBusinessSuccess() {
+
+        User business = new User();
+        business.setUserId(5L);
+        business.setUserType(UserType.BUSINESS);
+
+        when(userRepository.findById(5L)).thenReturn(Optional.of(business));
+        when(transactionRepository.getTopCustomers(5L))
+                .thenReturn(new ArrayList<>());
+
+        var result = transactionService.getTopCustomers(5L);
+
+        assertNotNull(result);
+    }
+
+    @Test
+    void testGetRevenueReportSuccess() {
+
+        User business = new User();
+        business.setUserId(5L);
+        business.setUserType(UserType.BUSINESS);
+
+        when(userRepository.findById(5L)).thenReturn(Optional.of(business));
+
+        when(transactionRepository.getRevenueFromDate(anyLong(), any()))
+                .thenReturn(new BigDecimal("1000"));
+
+        var report = transactionService.getRevenueReport(5L);
+
+        assertNotNull(report);
+    }
+}
