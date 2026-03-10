@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Analytics & Reports')}"></head>
+<body class="bg-light">
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary mb-0">Analytics & Reports</h2>
+            <p class="text-muted mb-0">Track your cash flow and top customers.</p>
+        </div>
+        <a id="exportBtn" class="btn btn-success fw-bold shadow-sm px-4 py-2" href="#" target="_blank">
+            📥 Download CSV Ledger
+        </a>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-md-6 mb-3">
+            <div class="card bg-white shadow-sm border-0 rounded-4 border-start border-danger border-5">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted fw-bold mb-2 text-uppercase tracking-wider">Total Money Sent</h6>
+                    <h2 class="text-danger fw-bold mb-0" id="totalSent">₹0.00</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card bg-white shadow-sm border-0 rounded-4 border-start border-success border-5">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted fw-bold mb-2 text-uppercase tracking-wider">Total Money Received</h6>
+                    <h2 class="text-success fw-bold mb-0" id="totalReceived">₹0.00</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="businessAnalytics" class="d-none">
+        <div class="d-flex align-items-center mb-4">
+            <h4 class="fw-bold mb-0 me-3">🚀 Business Insights</h4>
+            <span class="badge bg-primary">PRO FEATURE</span>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 mb-4">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-header bg-dark text-white p-3 rounded-top-4">
+                        <h5 class="mb-0 fw-bold">🏆 Your Top Customers</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                <tr class="text-muted small text-uppercase">
+                                    <th class="ps-4">Rank</th>
+                                    <th>Customer Name</th>
+                                    <th class="text-center">Transactions</th>
+                                    <th class="text-end pe-4">Total Value</th>
+                                </tr>
+                                </thead>
+                                <tbody id="topCustomersBody">
+                                <tr><td colspan="4" class="text-center py-5 text-muted">Loading customer data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4">
+                <div class="card bg-primary text-white shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body p-4 d-flex flex-column justify-content-center text-center">
+                        <div class="display-4 mb-3 opacity-50">📈</div>
+
+                        <h6 class="fw-bold mb-2 opacity-75 text-uppercase">Monthly Revenue</h6>
+                        <h2 class="fw-bold mb-0" id="monthlyRev">₹0.00</h2>
+
+                        <hr class="border-light opacity-25 my-4">
+
+                        <div class="row">
+                            <div class="col-6 border-end border-light border-opacity-25">
+                                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Weekly</div>
+                                <div class="fw-bold fs-5" id="weeklyRev">₹0.00</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="small opacity-75 mb-1 text-uppercase fw-bold">Daily</div>
+                                <div class="fw-bold fs-5" id="dailyRev">₹0.00</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) { window.location.href = '/login'; return; }
+
+        document.getElementById('exportBtn').href = `/transactions/export/csv?userId=${userId}`;
+
+        fetch(`/users/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const user = data.data || data;
+                loadGeneralSummary();
+
+                if (user.userType === 'BUSINESS') {
+                    document.getElementById('businessAnalytics').classList.remove('d-none');
+                    loadTopCustomers();
+                    loadRevenueReport();
+                }
+            });
+    });
+
+    function loadGeneralSummary() {
+        fetch(`/transactions/summary/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const summary = data.data;
+                    document.getElementById('totalSent').textContent =
+                        '₹' + parseFloat(summary.totalSent || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    document.getElementById('totalReceived').textContent =
+                        '₹' + parseFloat(summary.totalReceived || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                }
+            });
+    }
+
+    function loadTopCustomers() {
+        fetch(`/transactions/top-customers/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('topCustomersBody');
+                tbody.innerHTML = '';
+                const customers = data.data || [];
+
+                if (customers.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No customer data yet.</td></tr>';
+                    return;
+                }
+
+                customers.forEach((cust, index) => {
+                    let rank = `#${index + 1}`;
+                    if (index === 0) rank = '🥇 1st';
+                    if (index === 1) rank = '🥈 2nd';
+                    if (index === 2) rank = '🥉 3rd';
+
+                    // PERFECT MATCH TO YOUR DTO
+                    const tCount = cust.totalTransactions || 0;
+                    const tAmount = cust.totalRevenue || 0;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 fw-bold text-muted">${rank}</td>
+                            <td class="fw-bold">${cust.customerName || 'Unknown'} <br><small class="text-muted fw-normal">ID: ${cust.customerId}</small></td>
+                            <td class="text-center fw-bold text-primary">${tCount}</td>
+                            <td class="text-end pe-4 fw-bold text-success">₹${parseFloat(tAmount).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                    `;
+                });
+            });
+    }
+
+    function loadRevenueReport() {
+        fetch(`/transactions/revenue-report/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    const report = data.data;
+
+                    // PERFECT MATCH TO YOUR DTO
+                    const dRev = report.dailyRevenue || 0;
+                    const wRev = report.weeklyRevenue || 0;
+                    const mRev = report.monthlyRevenue || 0;
+
+                    document.getElementById('dailyRev').textContent = '₹' + parseFloat(dRev).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    document.getElementById('weeklyRev').textContent = '₹' + parseFloat(wRev).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                    document.getElementById('monthlyRev').textContent = '₹' + parseFloat(mRev).toLocaleString('en-IN', {minimumFractionDigits: 2});
+                }
+            });
+    }
+</script>
+</body>
+</html>

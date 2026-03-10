@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - Business Loans')}"></head>
+<body class="bg-light">
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">Business Capital</h2>
+        <div id="bizBadge"></div>
+    </div>
+
+    <div id="notEligible" class="alert alert-warning d-none shadow-sm rounded-4 p-4">
+        <h4 class="fw-bold">Business Only Feature</h4>
+        <p class="mb-0">RevPay loans are currently only available for verified Business Accounts.</p>
+    </div>
+
+    <div id="loanContent" class="row d-none">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-dark text-white border-0 py-3 rounded-top-4">
+                    <h5 class="fw-bold mb-0">Apply for Loan</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div id="loanAlert" class="alert d-none"></div>
+                    <form id="applyLoanForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Amount (₹)</label>
+                            <input type="number" id="loanAmount" class="form-control form-control-lg" placeholder="Min 10,000" required min="10000">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Tenure (Months)</label>
+                            <select id="loanTenure" class="form-select">
+                                <option value="6">6 Months</option>
+                                <option value="12">12 Months</option>
+                                <option value="24">24 Months</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted fw-bold">Purpose</label>
+                            <input type="text" id="loanPurpose" class="form-control" placeholder="e.g. Expansion" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label text-muted fw-bold">Document Name/Ref</label>
+                            <input type="text" id="loanDocument" class="form-control" placeholder="Business_License.pdf" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold btn-lg shadow-sm" id="applyBtn">Apply Now</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="fw-bold text-secondary mb-0">Loan History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                            <tr class="text-muted small">
+                                <th class="ps-4">ID</th>
+                                <th>AMOUNT</th>
+                                <th>STATUS</th>
+                                <th>CREATED</th>
+                                <th class="text-center pe-4">ACTION</th>
+                            </tr>
+                            </thead>
+                            <tbody id="loanTableBody">
+                            <tr><td colspan="5" class="text-center py-5 text-muted">Loading loans...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="repayModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold">Repay Loan EMI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="repayAlert" class="alert d-none"></div>
+                <form id="repayForm">
+                    <input type="hidden" id="repayLoanId">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold">Payment Amount (₹)</label>
+                        <input type="number" id="repayAmount" class="form-control form-control-lg" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold btn-lg" id="repayBtn">Confirm Repayment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+<script>
+    const userId = localStorage.getItem('userId');
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) { window.location.href = '/login'; return; }
+        checkEligibility();
+    });
+
+    function checkEligibility() {
+        fetch(`/users/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const user = data.data || data;
+                if (user.userType === 'BUSINESS') {
+                    document.getElementById('loanContent').classList.remove('d-none');
+                    document.getElementById('bizBadge').innerHTML = '<span class="badge bg-primary">BUSINESS ACCOUNT</span>';
+                    loadLoans();
+                } else {
+                    document.getElementById('notEligible').classList.remove('d-none');
+                }
+            });
+    }
+
+    function loadLoans() {
+    const tbody = document.getElementById('loanTableBody');
+
+    fetch(`/loans/business/${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            console.log("Loan Data Received:", data); // Debugging: Check your browser console (F12)
+            tbody.innerHTML = '';
+
+            // Handle both wrapped (ApiResponse) and unwrapped JSON
+            const loans = data.data || data;
+
+            if (!loans || loans.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No loan history found.</td></tr>';
+                return;
+            }
+
+            loans.forEach(loan => {
+                // 1. Determine Status Badge Style
+                let badge = 'bg-secondary';
+                if(loan.status === 'APPROVED') badge = 'bg-info';
+                if(loan.status === 'DISBURSED') badge = 'bg-success';
+                if(loan.status === 'CLOSED') badge = 'bg-dark';
+                if(loan.status === 'REJECTED') badge = 'bg-danger';
+
+                // 2. Calculate Repayment Progress
+                // We sum up the 'emi' values from the repayments list sent by the backend
+                const totalPaid = loan.repayments ? loan.repayments.reduce((sum, r) => sum + r.emi, 0) : 0;
+                const remaining = loan.amount - totalPaid;
+
+                // 3. Determine which Action Button to show
+                let actionBtn = '';
+                if(loan.status === 'APPROVED') {
+                    // Approved but not claimed yet
+                    actionBtn = `<button class="btn btn-sm btn-primary fw-bold" onclick="disburseLoan(${loan.loanId})">Claim Funds</button>`;
+                } else if(loan.status === 'DISBURSED') {
+                    // Active loan, allow repayment
+                    actionBtn = `<button class="btn btn-sm btn-outline-success fw-bold" onclick="openRepayModal(${loan.loanId})">Pay EMI</button>`;
+                } else {
+                    // Closed or Rejected
+                    actionBtn = `<span class="text-muted small">No Actions</span>`;
+                }
+
+                // 4. Create and append the Row
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="ps-4 fw-bold text-muted">#${loan.loanId}</td>
+                    <td>
+                        <div class="fw-bold text-dark">₹${parseFloat(loan.amount).toLocaleString('en-IN')}</div>
+                        <div class="small text-muted">${loan.tenureMonths} Months @ ${loan.interestRate || 0}%</div>
+                    </td>
+                    <td><span class="badge ${badge}">${loan.status}</span></td>
+                    <td>
+                        <div class="small fw-bold text-success">Paid: ₹${totalPaid.toLocaleString('en-IN')}</div>
+                        <div class="small text-danger">Left: ₹${remaining.toLocaleString('en-IN')}</div>
+                    </td>
+                    <td class="text-center pe-4">${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(err => {
+            console.error("Error loading loans:", err);
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Failed to load loan data from server.</td></tr>';
+        });
+}
+
+    document.getElementById('applyLoanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('applyBtn');
+        const alertBox = document.getElementById('loanAlert');
+        const payload = {
+            businessId: parseInt(userId),
+            amount: parseFloat(document.getElementById('loanAmount').value),
+            tenureMonths: parseInt(document.getElementById('loanTenure').value),
+            purpose: document.getElementById('loanPurpose').value,
+            documentName: document.getElementById('loanDocument').value
+        };
+        btn.disabled = true; btn.textContent = 'Processing...';
+        fetch('/loans/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            btn.disabled = false; btn.textContent = 'Apply Now';
+            if(data.success) {
+                alertBox.className = "alert alert-success"; alertBox.textContent = "Application submitted! Check history below."; alertBox.classList.remove('d-none');
+                document.getElementById('applyLoanForm').reset();
+                loadLoans();
+            } else {
+                alertBox.className = "alert alert-danger"; alertBox.textContent = data.message; alertBox.classList.remove('d-none');
+            }
+        });
+    });
+
+    function disburseLoan(id) {
+        if(!confirm("Claim funds and add to your wallet?")) return;
+        fetch(`/loans/${id}/disburse`, { method: 'POST' })
+            .then(res => res.json()).then(data => {
+                if(data.success) {
+                    alert("Funds credited successfully!");
+                    loadLoans();
+                } else alert(data.message);
+            });
+    }
+
+    function openRepayModal(id) {
+        document.getElementById('repayLoanId').value = id;
+        new bootstrap.Modal(document.getElementById('repayModal')).show();
+    }
+
+    document.getElementById('repayForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const payload = {
+            loanId: parseInt(document.getElementById('repayLoanId').value),
+            businessId: parseInt(userId),
+            amount: parseFloat(document.getElementById('repayAmount').value)
+        };
+        fetch('/loans/repay', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.success) window.location.reload(); else alert(data.message);
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,7 +1,9 @@
 package com.revpay.controller;
 
 import java.math.BigDecimal;
+import java.util.List;
 
+import com.revpay.model.MoneyRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -101,5 +103,23 @@ public class MoneyRequestController {
                         null
                 )
         );
+    }
+
+    /**
+     * GET INCOMING REQUESTS
+     */
+    @GetMapping("/incoming/{userId}")
+    public ResponseEntity<ApiResponse<List<MoneyRequest>>> getIncomingRequests(@PathVariable Long userId) {
+        List<MoneyRequest> requests = moneyRequestService.getIncomingRequests(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Incoming fetched", requests));
+    }
+
+    /**
+     * GET OUTGOING REQUESTS
+     */
+    @GetMapping("/outgoing/{userId}")
+    public ResponseEntity<ApiResponse<List<MoneyRequest>>> getOutgoingRequests(@PathVariable Long userId) {
+        List<MoneyRequest> requests = moneyRequestService.getOutgoingRequests(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Outgoing fetched", requests));
     }
 }

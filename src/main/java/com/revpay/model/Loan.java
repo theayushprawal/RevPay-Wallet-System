@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revpay.model.enums.LoanStatus;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
@@ -18,6 +19,7 @@ public class Loan {
     @Column(name = "LOAN_ID")
     private Long loanId;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "BUSINESS_ID")
     private User business;

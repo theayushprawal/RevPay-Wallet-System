@@ -2,6 +2,8 @@ package com.revpay.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -14,6 +16,7 @@ public class Wallet {
     @Column(name = "WALLET_ID")
     private Long walletId;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "USER_ID")
     private User user;

@@ -2,6 +2,7 @@ package com.revpay.controller;
 
 import com.revpay.dto.ApiResponse;
 import com.revpay.dto.RepayLoanRequest;
+import com.revpay.repository.LoanRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,14 +11,19 @@ import com.revpay.dto.ApplyLoanRequest;
 import com.revpay.model.Loan;
 import com.revpay.service.LoanService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/loans")
 public class LoanController {
 
     private final LoanService loanService;
 
-    public LoanController(LoanService loanService) {
+    private final LoanRepository loanRepository;
+
+    public LoanController(LoanService loanService, LoanRepository loanRepository) {
         this.loanService = loanService;
+        this.loanRepository = loanRepository;
     }
 
     /**
@@ -71,6 +77,20 @@ public class LoanController {
                         "Loan repayment successful",
                         null
                 )
+        );
+    }
+
+    /**
+     * GET LOANS FOR BUSINESS
+     * This fetches all loans (Approved, Disbursed, etc.) for a specific business ID
+     */
+    @GetMapping("/business/{businessId}")
+    public ResponseEntity<ApiResponse<List<Loan>>> getLoansByBusiness(@PathVariable Long businessId) {
+        // Using the underscore method we just added to the repository
+        List<Loan> loans = loanRepository.findByBusiness_UserId(businessId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Business loans fetched successfully", loans)
         );
     }
 }

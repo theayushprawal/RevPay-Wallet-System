@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout :: head('RevPay - My Profile')}"></head>
+
+<body class="bg-light">
+
+<nav th:replace="~{layout :: navbar}"></nav>
+
+<div class="container mt-5 mb-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">My Profile</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3 mx-auto" style="width: 80px; height: 80px; font-size: 2.5rem;">
+                        👤
+                    </div>
+                    <h4 class="fw-bold mb-1" id="displayFullName">Loading...</h4>
+                    <p class="text-muted mb-4 fw-bold" id="displayUserType">...</p>
+
+                    <div class="p-3 bg-light rounded-4 border border-secondary border-opacity-25 mt-4">
+                        <p class="small text-muted mb-1 text-uppercase fw-bold">Your RevPay Account ID</p>
+                        <h2 class="fw-bold text-dark mb-0 tracking-widest" id="displayUserId">-</h2>
+                        <p class="small text-muted mt-2 mb-0">Share this ID to receive funds.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+
+            <div id="profileAlert" class="alert d-none" role="alert"></div>
+
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-secondary mb-0">Personal Details</h5>
+                    <button class="btn btn-outline-primary btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">✎ Edit Profile</button>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Email Address</div>
+                        <div class="col-sm-8 fw-semibold" id="detailEmail">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Phone Number</div>
+                        <div class="col-sm-8 fw-semibold" id="detailPhone">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Account Status</div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-success px-2 py-1" id="detailStatus">ACTIVE</span>
+                        </div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row">
+                        <div class="col-sm-4 text-muted fw-bold">Member Since</div>
+                        <div class="col-sm-8 fw-semibold" id="detailCreatedAt">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4 mb-4 d-none border-start border-primary border-4" id="businessDetailsCard">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="fw-bold text-primary mb-0">🏢 Business Profile</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Business Name</div>
+                        <div class="col-sm-8 fw-semibold" id="bizName">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Business Type</div>
+                        <div class="col-sm-8 fw-semibold" id="bizType">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">Address</div>
+                        <div class="col-sm-8 fw-semibold" id="bizAddress">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row mb-3">
+                        <div class="col-sm-4 text-muted fw-bold">PAN Number</div>
+                        <div class="col-sm-8 fw-semibold text-uppercase tracking-widest" id="bizPan">Loading...</div>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="row">
+                        <div class="col-sm-4 text-muted fw-bold">Verification Status</div>
+                        <div class="col-sm-8 fw-semibold" id="bizVerified">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white border-0 pt-4 pb-0">
+                    <h5 class="fw-bold text-danger mb-0">🔒 Security Settings</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-1">Account Password</h6>
+                            <p class="text-muted small mb-0">Update your password to keep your account secure.</p>
+                        </div>
+                        <button class="btn btn-outline-dark btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change</button>
+                    </div>
+                    <hr class="text-muted opacity-10">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-1">Transaction PIN</h6>
+                            <p class="text-muted small mb-0">Your 4-digit PIN used to authorize money transfers.</p>
+                        </div>
+                        <button class="btn btn-outline-dark btn-sm fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#changePinModal">Change</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-primary">Update Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="updateAlert" class="alert d-none"></div>
+
+                <form id="updateProfileForm">
+                    <h6 class="text-secondary border-bottom pb-2 mb-3 fw-bold">Personal Information</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label text-muted fw-bold">Full Name</label>
+                            <input type="text" id="editFullName" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Email</label>
+                            <input type="email" id="editEmail" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted fw-bold">Phone Number</label>
+                            <input type="text" id="editPhone" class="form-control form-control-lg" required>
+                        </div>
+                    </div>
+
+                    <div id="editBusinessSection" class="d-none">
+                        <h6 class="text-secondary border-bottom pb-2 mb-3 mt-3 fw-bold">Business Information</h6>
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted fw-bold">Business Name</label>
+                                <input type="text" id="editBizName" class="form-control form-control-lg">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted fw-bold">Business Type</label>
+                                <select id="editBizType" class="form-select form-control-lg">
+                                    <option value="Retail">Retail</option>
+                                    <option value="IT Services">IT Services</option>
+                                    <option value="Consulting">Consulting</option>
+                                    <option value="Food & Beverage">Food & Beverage</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label text-muted fw-bold">Business Address</label>
+                                <input type="text" id="editBizAddress" class="form-control form-control-lg">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold btn-lg mt-2 shadow-sm" id="updateBtn">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Change Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div id="pwdAlert" class="alert d-none small"></div>
+
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold small">Current Password</label>
+                        <input type="password" id="currentPwd" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold small">New Password</label>
+                        <input type="password" id="newPwd" class="form-control" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold small">Confirm New Password</label>
+                        <input type="password" id="confirmNewPwd" class="form-control" required>
+                    </div>
+                    <button type="submit" id="pwdBtn" class="btn btn-dark w-100 fw-bold">Update Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="changePinModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-danger mb-0">Change PIN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <p class="text-muted small mb-3">Your transaction PIN must be exactly 4 digits.</p>
+                <div id="pinAlert" class="alert d-none small"></div>
+
+                <form id="changePinForm">
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold small">Current PIN</label>
+                        <input type="password" id="currentPin" class="form-control text-center tracking-widest" pattern="\d{4}" maxlength="4" placeholder="****" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted fw-bold small">New PIN</label>
+                        <input type="password" id="newPin" class="form-control text-center tracking-widest border-danger" pattern="\d{4}" maxlength="4" placeholder="****" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold small">Confirm New PIN</label>
+                        <input type="password" id="confirmNewPin" class="form-control text-center tracking-widest border-danger" pattern="\d{4}" maxlength="4" placeholder="****" required>
+                    </div>
+                    <button type="submit" id="pinBtn" class="btn btn-danger w-100 fw-bold">Update PIN</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    const userId = localStorage.getItem('userId');
+    let currentUserType = 'PERSONAL';
+
+    document.addEventListener("DOMContentLoaded", function() {
+        if (!userId) {
+            window.location.href = '/login';
+            return;
+        }
+        loadProfile();
+    });
+
+    // 1. LOAD PROFILE
+    function loadProfile() {
+        const alertBox = document.getElementById('profileAlert');
+
+        fetch(`/users/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || data.userId) {
+                    const user = data.data || data;
+                    currentUserType = user.userType;
+
+                    // Display Data
+                    document.getElementById('displayFullName').textContent = user.fullName;
+                    document.getElementById('displayUserType').textContent = user.userType + " ACCOUNT";
+                    document.getElementById('displayUserId').textContent = user.userId;
+                    document.getElementById('detailEmail').textContent = user.email;
+                    document.getElementById('detailPhone').textContent = user.phone;
+
+                    if(user.createdAt) {
+                        document.getElementById('detailCreatedAt').textContent = new Date(user.createdAt).toLocaleDateString([], {year: 'numeric', month: 'long', day: 'numeric'});
+                    }
+
+                    // Pre-fill Edit Modal
+                    document.getElementById('editFullName').value = user.fullName;
+                    document.getElementById('editEmail').value = user.email;
+                    document.getElementById('editPhone').value = user.phone;
+
+                    // Handle Business Logic
+                    if (user.userType === 'BUSINESS' && user.businessProfile) {
+                        document.getElementById('businessDetailsCard').classList.remove('d-none');
+                        document.getElementById('bizName').textContent = user.businessProfile.businessName || 'N/A';
+                        document.getElementById('bizType').textContent = user.businessProfile.businessType || 'N/A';
+                        document.getElementById('bizAddress').textContent = user.businessProfile.address || 'N/A';
+                        document.getElementById('bizPan').textContent = user.businessProfile.panNumber || 'N/A';
+
+                        const isVerified = user.businessProfile.verified === 'YES';
+                        document.getElementById('bizVerified').innerHTML = isVerified
+                            ? '<span class="badge bg-success px-2 py-1 shadow-sm">✔ VERIFIED</span>'
+                            : '<span class="badge bg-warning text-dark px-2 py-1 shadow-sm">PENDING VERIFICATION</span>';
+
+                        document.getElementById('editBusinessSection').classList.remove('d-none');
+                        document.getElementById('editBizName').value = user.businessProfile.businessName || '';
+                        document.getElementById('editBizAddress').value = user.businessProfile.address || '';
+
+                        const typeSelect = document.getElementById('editBizType');
+                        if (user.businessProfile.businessType) {
+                            let optionExists = Array.from(typeSelect.options).some(opt => opt.value === user.businessProfile.businessType);
+                            if(!optionExists) {
+                                typeSelect.add(new Option(user.businessProfile.businessType, user.businessProfile.businessType));
+                            }
+                            typeSelect.value = user.businessProfile.businessType;
+                        }
+                    }
+                } else {
+                    alertBox.className = 'alert alert-danger';
+                    alertBox.textContent = data.message || "Failed to load profile.";
+                    alertBox.classList.remove('d-none');
+                }
+            });
+    }
+
+    // 2. UPDATE PROFILE
+    document.getElementById('updateProfileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('updateBtn');
+        const alertBox = document.getElementById('updateAlert');
+        btn.disabled = true; btn.textContent = 'Saving...';
+
+        const payload = {
+            userId: parseInt(userId),
+            fullName: document.getElementById('editFullName').value,
+            email: document.getElementById('editEmail').value,
+            phone: document.getElementById('editPhone').value
+        };
+
+        if (currentUserType === 'BUSINESS') {
+            payload.businessName = document.getElementById('editBizName').value;
+            payload.businessType = document.getElementById('editBizType').value;
+            payload.address = document.getElementById('editBizAddress').value;
+        }
+
+        fetch('/users/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Save Changes';
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editProfileModal')).hide();
+                loadProfile();
+            } else {
+                alertBox.className = 'alert alert-danger mb-3';
+                alertBox.textContent = data.message || 'Update failed.';
+                alertBox.classList.remove('d-none');
+            }
+        });
+    });
+
+    // 3. CHANGE PASSWORD
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('pwdBtn');
+        const alertBox = document.getElementById('pwdAlert');
+
+        const current = document.getElementById('currentPwd').value;
+        const newPwd = document.getElementById('newPwd').value;
+        const confirmPwd = document.getElementById('confirmNewPwd').value;
+
+        if (newPwd !== confirmPwd) {
+            alertBox.className = 'alert alert-danger mb-3';
+            alertBox.textContent = 'New passwords do not match.';
+            alertBox.classList.remove('d-none');
+            return;
+        }
+
+        btn.disabled = true; btn.textContent = 'Updating...';
+
+        fetch(`/auth/change-password?userId=${userId}&currentPassword=${encodeURIComponent(current)}&newPassword=${encodeURIComponent(newPwd)}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Update Password';
+            if (data.success) {
+                alertBox.className = 'alert alert-success mb-3';
+                alertBox.textContent = 'Password updated successfully!';
+                alertBox.classList.remove('d-none');
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+                    document.getElementById('changePasswordForm').reset();
+                    alertBox.classList.add('d-none');
+                }, 1500);
+            } else {
+                alertBox.className = 'alert alert-danger mb-3';
+                alertBox.textContent = data.message || 'Failed to update password.';
+                alertBox.classList.remove('d-none');
+            }
+        });
+    });
+
+    // 4. CHANGE PIN
+    document.getElementById('changePinForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('pinBtn');
+        const alertBox = document.getElementById('pinAlert');
+
+        const current = document.getElementById('currentPin').value;
+        const newPin = document.getElementById('newPin').value;
+        const confirmPin = document.getElementById('confirmNewPin').value;
+
+        if (newPin !== confirmPin) {
+            alertBox.className = 'alert alert-danger mb-3';
+            alertBox.textContent = 'New PINs do not match.';
+            alertBox.classList.remove('d-none');
+            return;
+        }
+
+        btn.disabled = true; btn.textContent = 'Updating...';
+
+        fetch(`/auth/change-pin?userId=${userId}&oldPin=${encodeURIComponent(current)}&newPin=${encodeURIComponent(newPin)}`, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false; btn.textContent = 'Update PIN';
+            if (data.success) {
+                alertBox.className = 'alert alert-success mb-3';
+                alertBox.textContent = 'Transaction PIN updated!';
+                alertBox.classList.remove('d-none');
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('changePinModal')).hide();
+                    document.getElementById('changePinForm').reset();
+                    alertBox.classList.add('d-none');
+                }, 1500);
+            } else {
+                alertBox.className = 'alert alert-danger mb-3';
+                alertBox.textContent = data.message || 'Failed to update PIN.';
+                alertBox.classList.remove('d-none');
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,9 @@
 package com.revpay.service;
 
+import com.revpay.model.MoneyRequest;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface MoneyRequestService {
 
@@ -28,4 +31,7 @@ public interface MoneyRequestService {
      * Sender cancels the request
      */
     void cancelRequest(Long requestId);
+
+    List<MoneyRequest> getIncomingRequests(Long userId);
+    List<MoneyRequest> getOutgoingRequests(Long userId);
 }
