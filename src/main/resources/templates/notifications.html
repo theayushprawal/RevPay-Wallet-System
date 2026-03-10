@@ -76,7 +76,13 @@
 
     function markRead(id) {
         fetch(`/notifications/${id}/read`, { method: 'PATCH' })
-            .then(() => loadNotifications());
+            .then(() => {
+                loadNotifications(); // Reloads the notification list
+                // Instantly update the bell badge using the global function we just made!
+                if (typeof window.updateGlobalNotificationCount === 'function') {
+                    window.updateGlobalNotificationCount();
+                }
+            });
     }
 
     function loadPreferences() {
