@@ -1,7 +1,11 @@
 package com.revpay.service.impl;
 
+import com.revpay.model.Transaction;
 import com.revpay.model.User;
 import com.revpay.model.Wallet;
+import com.revpay.model.enums.TransactionStatus;
+import com.revpay.model.enums.TransactionType;
+import com.revpay.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,13 +27,15 @@ public class WalletServiceImpl implements WalletService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
     private final AuthService authService;
+    private final TransactionRepository transactionRepository;
 
     public WalletServiceImpl(WalletRepository walletRepository,
                              UserRepository userRepository,
-                             AuthService authService) {
+                             AuthService authService, TransactionRepository transactionRepository) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
         this.authService = authService;
+        this.transactionRepository = transactionRepository;
     }
 
     @Override
@@ -97,6 +103,17 @@ public class WalletServiceImpl implements WalletService {
         // Save wallet
         walletRepository.save(wallet);
 
+        // Save the Transaction Record!
+        Transaction txn = new Transaction();
+        txn.setReceiver(user); // The user is receiving the money into their wallet
+        txn.setAmount(amount);
+        txn.setTxnType(TransactionType.DEPOSIT);
+        txn.setStatus(TransactionStatus.SUCCESS);
+        txn.setTxnDate(LocalDateTime.now());
+        txn.setRemarks("Added funds from linked account");
+
+        transactionRepository.save(txn);
+
         log.info("Deposit successful userId={} amount={} newBalance={}",
                 userId, amount, newBalance);
     }
@@ -148,6 +165,17 @@ public class WalletServiceImpl implements WalletService {
 
         // Save wallet
         walletRepository.save(wallet);
+
+        // Save the Transaction Record!
+        Transaction txn = new Transaction();
+        txn.setSender(user); // The user is sending the money out to their bank
+        txn.setAmount(amount);
+        txn.setTxnType(TransactionType.WITHDRAW);
+        txn.setStatus(TransactionStatus.SUCCESS);
+        txn.setTxnDate(LocalDateTime.now());
+        txn.setRemarks("Withdrew funds to linked bank");
+
+        transactionRepository.save(txn);
 
         log.info("Withdrawal successful userId={} amount={} newBalance={}",
                 userId, amount, newBalance);

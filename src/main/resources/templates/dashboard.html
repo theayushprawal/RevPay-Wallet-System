@@ -122,8 +122,69 @@
     </div>
 </div>
 
-<div class="modal fade" id="depositModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold text-dark">Add Funds</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><form id="depositForm"><div class="mb-3"><input type="number" id="depAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required></div><div class="mb-4"><input type="password" id="depPin" class="form-control text-center tracking-widest bg-light" pattern="\d{4}" maxlength="4" placeholder="PIN" required></div><button type="submit" id="depBtn" class="btn btn-success w-100 fw-bold btn-lg">Deposit</button></form></div></div></div></div>
-<div class="modal fade" id="withdrawModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-light border-0"><h5 class="modal-title fw-bold text-dark">Withdraw</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4 text-center"><form id="withdrawForm"><div class="mb-3"><input type="number" id="withAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required></div><div class="mb-4"><input type="password" id="withPin" class="form-control text-center tracking-widest bg-light border-danger" pattern="\d{4}" maxlength="4" placeholder="PIN" required></div><button type="submit" id="withBtn" class="btn btn-danger w-100 fw-bold btn-lg">Withdraw</button></form></div></div></div></div>
+<div class="modal fade" id="depositModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-dark">Add Funds</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <form id="depositForm">
+                    <div class="mb-3 text-start">
+                        <label class="form-label text-muted fw-bold small">Funding Source</label>
+                        <select id="depPaymentMethod" class="form-select fw-semibold mb-1" required>
+                            <option value="" disabled selected>Loading methods...</option>
+                        </select>
+                        <div id="noPaymentMethodAlert" class="alert alert-warning small d-none p-2 mb-0">
+                            No linked accounts. <a href="/payment-methods" class="fw-bold text-dark">Add one here</a>.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="number" id="depAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required>
+                    </div>
+                    <div class="mb-4">
+                        <input type="password" id="depPin" class="form-control text-center tracking-widest bg-light" pattern="\d{4}" maxlength="4" placeholder="PIN" required>
+                    </div>
+                    <button type="submit" id="depBtn" class="btn btn-success w-100 fw-bold btn-lg">Deposit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-light border-0">
+                <h5 class="modal-title fw-bold text-dark">Withdraw</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <form id="withdrawForm">
+                    <div class="mb-3 text-start">
+                        <label class="form-label text-muted fw-bold small">Transfer To (Bank Only)</label>
+                        <select id="withPaymentMethod" class="form-select fw-semibold mb-1" required>
+                            <option value="" disabled selected>Loading banks...</option>
+                        </select>
+                        <div id="noBankMethodAlert" class="alert alert-warning small d-none p-2 mb-0">
+                            No linked bank accounts. <a href="/payment-methods" class="fw-bold text-dark">Add one here</a>.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="number" id="withAmount" class="form-control form-control-lg text-center fw-bold" placeholder="Amount (₹)" min="1" required>
+                    </div>
+                    <div class="mb-4">
+                        <input type="password" id="withPin" class="form-control text-center tracking-widest bg-light border-danger" pattern="\d{4}" maxlength="4" placeholder="PIN" required>
+                    </div>
+                    <button type="submit" id="withBtn" class="btn btn-danger w-100 fw-bold btn-lg">Withdraw</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div th:replace="~{layout :: scripts}"></div>
 
@@ -135,7 +196,7 @@
         fetch(`/users/${userId}`).then(res => res.json()).then(data => { if(data.success) document.getElementById('welcomeMessage').textContent = `Welcome back, ${data.data.fullName.split(' ')[0]}!`; });
 
         loadDashboardStats();
-        loadRecentTransactions(); // Fetch transactions independently!
+        loadRecentTransactions();
     });
 
     function showAlert(msg, isSuccess) {
@@ -145,7 +206,7 @@
         setTimeout(() => box.classList.add('d-none'), 4000);
     }
 
-    // 1. Fetch only Wallet Balance and Counters from Dashboard API
+    // --- DASHBOARD STATS ---
     function loadDashboardStats() {
         fetch(`/dashboard/summary?userId=${userId}`)
             .then(res => res.json())
@@ -159,7 +220,7 @@
             });
     }
 
-    // 2. NEW: Fetch ALL history independently and slice top 5
+    // --- RECENT TRANSACTIONS ---
     function loadRecentTransactions() {
         fetch(`/transactions/history/${userId}`)
             .then(res => res.json())
@@ -169,8 +230,6 @@
 
                 if (data.success && data.data) {
                     let txns = data.data;
-
-                    // Apply double entry fix
                     let myTxns = txns.filter(txn => {
                         const myId = String(userId);
                         if (txn.txnType === 'SEND') return myId === (txn.sender ? String(txn.sender.userId) : null);
@@ -178,10 +237,7 @@
                         return true;
                     });
 
-                    // Sort newest to oldest just to be safe
                     myTxns.sort((a, b) => new Date(b.txnDate) - new Date(a.txnDate));
-
-                    // Slice exactly up to 5
                     myTxns = myTxns.slice(0, 5);
 
                     if(myTxns.length === 0) {
@@ -253,8 +309,6 @@
                 bootstrap.Modal.getInstance(document.getElementById('sendMoneyModal')).hide();
                 document.getElementById('sendMoneyForm').reset();
                 showAlert("Money sent successfully!", true);
-
-                // Refresh both the stats and the table independently!
                 loadDashboardStats();
                 loadRecentTransactions();
             } else {
@@ -266,9 +320,139 @@
         }
     });
 
-    // --- DEPOSIT / WITHDRAW LOGIC ---
-    document.getElementById('depositForm').addEventListener('submit', function(e) { e.preventDefault(); const amt = document.getElementById('depAmount').value; const pin = document.getElementById('depPin').value; const btn = document.getElementById('depBtn'); btn.disabled = true; btn.textContent = 'Processing...'; fetch(`/wallet/deposit?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' }).then(res => res.json()).then(data => { btn.disabled = false; btn.textContent = 'Deposit'; if(data.success) { bootstrap.Modal.getInstance(document.getElementById('depositModal')).hide(); document.getElementById('depositForm').reset(); showAlert(`Added ₹${amt} to your wallet!`, true); loadDashboardStats(); loadRecentTransactions(); } else alert(data.message || 'Deposit failed'); }).catch(() => { btn.disabled = false; btn.textContent = 'Deposit'; }); });
-    document.getElementById('withdrawForm').addEventListener('submit', function(e) { e.preventDefault(); const amt = document.getElementById('withAmount').value; const pin = document.getElementById('withPin').value; const btn = document.getElementById('withBtn'); btn.disabled = true; btn.textContent = 'Processing...'; fetch(`/wallet/withdraw?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' }).then(res => res.json()).then(data => { btn.disabled = false; btn.textContent = 'Withdraw'; if(data.success) { bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide(); document.getElementById('withdrawForm').reset(); showAlert(`Withdrew ₹${amt}!`, true); loadDashboardStats(); loadRecentTransactions(); } else alert(data.message || 'Withdrawal failed.'); }).catch(() => { btn.disabled = false; btn.textContent = 'Withdraw'; }); });
+    // --- MODAL DATA FETCHERS ---
+
+    // Fetch accounts for Deposit
+    function loadDepositMethods() {
+        const selectEl = document.getElementById('depPaymentMethod');
+        const alertEl = document.getElementById('noPaymentMethodAlert');
+        const depBtn = document.getElementById('depBtn');
+
+        fetch(`/payment-methods/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const methods = data.data || data;
+                selectEl.innerHTML = '';
+
+                if (!methods || methods.length === 0) {
+                    selectEl.classList.add('d-none');
+                    alertEl.classList.remove('d-none');
+                    depBtn.disabled = true;
+                } else {
+                    selectEl.classList.remove('d-none');
+                    alertEl.classList.add('d-none');
+                    depBtn.disabled = false;
+
+                    methods.forEach(pm => {
+                        const option = document.createElement('option');
+                        option.value = pm.pmId;
+                        if (pm.methodType === 'CARD') {
+                            option.textContent = `💳 ${pm.paymentName} (**** ${pm.last4})`;
+                        } else {
+                            option.textContent = `🏦 ${pm.paymentName}`;
+                        }
+                        if (pm.isDefault === 'YES') option.selected = true;
+                        selectEl.appendChild(option);
+                    });
+                    if (selectEl.selectedIndex === -1 && methods.length > 0) selectEl.selectedIndex = 0;
+                }
+            });
+    }
+
+    // Fetch ONLY Banks for Withdraw
+    function loadWithdrawMethods() {
+        const selectEl = document.getElementById('withPaymentMethod');
+        const alertEl = document.getElementById('noBankMethodAlert');
+        const withBtn = document.getElementById('withBtn');
+
+        fetch(`/payment-methods/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                const methods = data.data || data;
+                selectEl.innerHTML = '';
+
+                // Filter out cards
+                const bankMethods = methods ? methods.filter(pm => pm.methodType === 'BANK') : [];
+
+                if (!bankMethods || bankMethods.length === 0) {
+                    selectEl.classList.add('d-none');
+                    alertEl.classList.remove('d-none');
+                    withBtn.disabled = true;
+                } else {
+                    selectEl.classList.remove('d-none');
+                    alertEl.classList.add('d-none');
+                    withBtn.disabled = false;
+
+                    bankMethods.forEach(pm => {
+                        const option = document.createElement('option');
+                        option.value = pm.pmId;
+                        option.textContent = `🏦 ${pm.paymentName}`;
+                        if (pm.isDefault === 'YES') option.selected = true;
+                        selectEl.appendChild(option);
+                    });
+                    if (selectEl.selectedIndex === -1 && bankMethods.length > 0) selectEl.selectedIndex = 0;
+                }
+            });
+    }
+
+    // Listeners to reload dropdowns
+    document.getElementById('depositModal').addEventListener('show.bs.modal', loadDepositMethods);
+    document.getElementById('withdrawModal').addEventListener('show.bs.modal', loadWithdrawMethods);
+
+
+    // --- DEPOSIT / WITHDRAW ACTIONS ---
+    document.getElementById('depositForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amt = document.getElementById('depAmount').value;
+        const pin = document.getElementById('depPin').value;
+        const btn = document.getElementById('depBtn');
+
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+
+        fetch(`/wallet/deposit?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Deposit';
+                if(data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('depositModal')).hide();
+                    document.getElementById('depositForm').reset();
+                    showAlert(`Added ₹${amt} to your wallet!`, true);
+                    loadDashboardStats();
+                    loadRecentTransactions();
+                } else {
+                    alert(data.message || 'Deposit failed');
+                }
+            }).catch(() => { btn.disabled = false; btn.textContent = 'Deposit'; });
+    });
+
+    document.getElementById('withdrawForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amt = document.getElementById('withAmount').value;
+        const pin = document.getElementById('withPin').value;
+        const btn = document.getElementById('withBtn');
+
+        btn.disabled = true;
+        btn.textContent = 'Processing...';
+
+        fetch(`/wallet/withdraw?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Withdraw';
+                if(data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide();
+                    document.getElementById('withdrawForm').reset();
+                    showAlert(`Withdrew ₹${amt}!`, true);
+                    loadDashboardStats();
+                    loadRecentTransactions();
+                } else {
+                    alert(data.message || 'Withdrawal failed.');
+                }
+            }).catch(() => { btn.disabled = false; btn.textContent = 'Withdraw'; });
+    });
+
 </script>
 </body>
 </html>

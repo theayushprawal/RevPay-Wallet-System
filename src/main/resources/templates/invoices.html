@@ -9,7 +9,7 @@
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-primary">Invoice Hub</h2>
-        <button class="btn btn-outline-primary fw-bold bg-white" onclick="initInvoicePage()">🔄 Refresh</button>
+        <button class="btn btn-outline-primary fw-bold" onclick="initInvoicePage()">🔄 Refresh</button>
     </div>
 
     <div id="businessSection" class="d-none mb-5">
@@ -110,8 +110,8 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label text-muted fw-bold">Customer RevPay ID</label>
-                            <input type="number" id="invCustomerId" class="form-control" required>
+                            <label class="form-label text-muted fw-bold">Customer (Email, Phone, or ID)</label>
+                            <input type="text" id="invCustomerIdentifier" class="form-control" placeholder="Email, Phone, or Account ID" required>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-muted fw-bold">Customer Name</label>
@@ -164,11 +164,62 @@
     </div>
 </div>
 
+<div class="modal fade" id="viewInvoiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold">Invoice Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 bg-light">
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <h6 class="text-muted small fw-bold mb-1 text-uppercase">Billed From</h6>
+                        <div id="viewFrom" class="fw-bold fs-5 text-dark">...</div>
+                    </div>
+                    <div class="col-sm-6 text-end">
+                        <h6 class="text-muted small fw-bold mb-1 text-uppercase">Billed To</h6>
+                        <div id="viewTo" class="fw-bold fs-5 text-dark">...</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive shadow-sm rounded-3">
+                    <table class="table table-bordered bg-white mb-0 align-middle">
+                        <thead class="bg-light">
+                        <tr class="text-muted small text-uppercase">
+                            <th class="ps-3 py-3">Item Description</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Price</th>
+                            <th class="text-end pe-3">Total</th>
+                        </tr>
+                        </thead>
+                        <tbody id="viewInvoiceItemsBody">
+                        </tbody>
+                        <tfoot class="bg-light">
+                        <tr>
+                            <th colspan="3" class="text-end py-3 text-muted text-uppercase">Grand Total:</th>
+                            <th class="text-end pe-3 py-3 text-primary fs-5 fw-bold" id="viewGrandTotal">₹0.00</th>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light pt-0">
+                <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{layout :: scripts}"></div>
 
 <script>
     const userId = localStorage.getItem('userId');
     let currentUserType = 'PERSONAL';
+
+    // NEW: Global arrays to store fetched invoice data for the View Modal
+    let globalIssuedInvoices = [];
+    let globalReceivedInvoices = [];
 
     document.addEventListener("DOMContentLoaded", function() {
         if (!userId) {
@@ -176,12 +227,10 @@
             return;
         }
         initInvoicePage();
-        // Add at least one row to the create form automatically
         addInvoiceItemRow();
     });
 
     function initInvoicePage() {
-        // 1. Fetch user to check if they are BUSINESS or PERSONAL
         fetch(`/users/${userId}`)
             .then(res => res.json())
             .then(data => {
@@ -194,15 +243,10 @@
                         loadBusinessSummary();
                         loadBusinessInvoices();
                     }
-                    // Everyone can receive invoices
                     loadCustomerInvoices();
                 }
             });
     }
-
-    // ==========================================
-    // FETCH DATA FUNCTIONS
-    // ==========================================
 
     function loadBusinessSummary() {
         fetch(`/invoices/summary/${userId}`)
@@ -223,7 +267,8 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    renderInvoices(data.data, tbody, 'issued');
+                    globalIssuedInvoices = data.data || []; // Store globally
+                    renderInvoices(globalIssuedInvoices, tbody, 'issued');
                 }
             });
     }
@@ -234,7 +279,8 @@
             .then(res => res.json())
             .then(data => {
                 if(data.success) {
-                    renderInvoices(data.data, tbody, 'received');
+                    globalReceivedInvoices = data.data || []; // Store globally
+                    renderInvoices(globalReceivedInvoices, tbody, 'received');
                 }
             });
     }
@@ -258,7 +304,6 @@
             if (type === 'issued') {
                 otherParty = inv.customerName;
             } else {
-                // Try to get the actual Business Name first, then fallback to the Owner's Name
                 if (inv.business && inv.business.businessProfile && inv.business.businessProfile.businessName) {
                     otherParty = inv.business.businessProfile.businessName;
                 } else if (inv.business) {
@@ -266,21 +311,20 @@
                 }
             }
 
+            // ALL invoices get a View button now
+            let viewBtn = `<button class="btn btn-sm btn-outline-secondary me-1 shadow-sm fw-bold" onclick="viewInvoiceDetails(${inv.invoiceId}, '${type}')">👁️ View</button>`;
+
             let actions = '';
             if(type === 'issued') {
                 if(inv.status === 'DRAFT') {
-                    actions = `<button class="btn btn-sm btn-primary me-1" onclick="sendInvoice(${inv.invoiceId})">Send</button>
-                               <button class="btn btn-sm btn-outline-danger" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
+                    actions = `<button class="btn btn-sm btn-primary me-1 shadow-sm fw-bold" onclick="sendInvoice(${inv.invoiceId})">Send</button>
+                               <button class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
                 } else if(inv.status === 'SENT' || inv.status === 'OVERDUE') {
-                    actions = `<button class="btn btn-sm btn-outline-danger" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
-                } else {
-                    actions = `<span class="text-muted small">No actions</span>`;
+                    actions = `<button class="btn btn-sm btn-outline-danger shadow-sm fw-bold" onclick="cancelInvoice(${inv.invoiceId})">Cancel</button>`;
                 }
             } else if(type === 'received') {
                 if(inv.status === 'SENT' || inv.status === 'OVERDUE') {
-                    actions = `<button class="btn btn-sm btn-success fw-bold px-3" onclick="openPayModal(${inv.invoiceId}, ${inv.totalAmount})">Pay Now</button>`;
-                } else {
-                    actions = `<span class="text-muted small">No actions</span>`;
+                    actions = `<button class="btn btn-sm btn-success fw-bold px-3 shadow-sm" onclick="openPayModal(${inv.invoiceId}, ${inv.totalAmount})">Pay Now</button>`;
                 }
             }
 
@@ -291,11 +335,59 @@
                 <td>${inv.dueDate}</td>
                 <td><span class="badge ${badgeClass}">${inv.status}</span></td>
                 <td class="text-end fw-bold">₹${amt}</td>
-                <td class="text-center pe-4">${actions}</td>
+                <td class="text-center pe-4">${viewBtn} ${actions}</td>
             `;
             tbody.appendChild(tr);
         });
     }
+
+    // ==========================================
+    // NEW: VIEW INVOICE LOGIC
+    // ==========================================
+    function viewInvoiceDetails(invoiceId, type) {
+        // Find the invoice in our global arrays
+        let invList = type === 'issued' ? globalIssuedInvoices : globalReceivedInvoices;
+        let inv = invList.find(i => i.invoiceId === invoiceId);
+
+        if(!inv) return;
+
+        // Populate Sender/Receiver Info
+        if(type === 'issued') {
+            document.getElementById('viewFrom').innerHTML = 'Your Business';
+            document.getElementById('viewTo').innerHTML = `${inv.customerName}<br><span class="text-muted small fw-normal">ID: ${inv.customerId}</span>`;
+        } else {
+            let fromName = inv.business && inv.business.businessProfile ? inv.business.businessProfile.businessName : (inv.business ? inv.business.fullName : 'Unknown Business');
+            document.getElementById('viewFrom').innerHTML = fromName;
+            document.getElementById('viewTo').innerHTML = 'You';
+        }
+
+        // Populate Items Table
+        const tbody = document.getElementById('viewInvoiceItemsBody');
+        tbody.innerHTML = '';
+
+        if(inv.items && inv.items.length > 0) {
+            inv.items.forEach(item => {
+                const itemTotal = (item.quantity * item.price);
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-3 fw-semibold text-dark">${item.itemName}</td>
+                        <td class="text-center">${item.quantity}</td>
+                        <td class="text-end text-muted">₹${item.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td class="text-end pe-3 fw-bold">₹${itemTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            });
+        } else {
+             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No line items found.</td></tr>';
+        }
+
+        // Set Grand Total
+        document.getElementById('viewGrandTotal').textContent = '₹' + parseFloat(inv.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
+
+        // Show Modal
+        new bootstrap.Modal(document.getElementById('viewInvoiceModal')).show();
+    }
+
 
     // ==========================================
     // CREATE INVOICE LOGIC
@@ -314,12 +406,12 @@
         container.appendChild(row);
     }
 
-    document.getElementById('createInvoiceForm').addEventListener('submit', function(e) {
+    document.getElementById('createInvoiceForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const btn = document.getElementById('createBtn');
         const alertBox = document.getElementById('createAlert');
+        const identifier = document.getElementById('invCustomerIdentifier').value.trim();
 
-        // Gather Dynamic Items
         const itemRows = document.querySelectorAll('.item-row');
         const itemsList = Array.from(itemRows).map(row => ({
             itemName: row.querySelector('.item-name').value,
@@ -334,44 +426,72 @@
             return;
         }
 
-        const payload = {
-            businessId: parseInt(userId),
-            customerId: parseInt(document.getElementById('invCustomerId').value),
-            customerName: document.getElementById('invCustomerName').value,
-            dueDate: document.getElementById('invDueDate').value,
-            items: itemsList
-        };
-
         btn.disabled = true;
-        btn.textContent = "Saving...";
+        btn.textContent = "Looking up customer...";
+        alertBox.classList.add('d-none');
 
-        fetch('/invoices', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(res => res.json())
-        .then(data => {
+        try {
+            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(identifier)}`);
+            const lookupData = await lookupRes.json();
+
+            if (!lookupData.success) {
+                btn.disabled = false;
+                btn.textContent = "Save as Draft";
+                alertBox.className = 'alert alert-warning';
+                alertBox.textContent = "Could not find a customer with that Email, Phone, or ID.";
+                alertBox.classList.remove('d-none');
+                return;
+            }
+
+            const resolvedCustomerId = lookupData.data;
+
+            if (resolvedCustomerId == userId) {
+                 btn.disabled = false;
+                 btn.textContent = "Save as Draft";
+                 alertBox.className = 'alert alert-warning';
+                 alertBox.textContent = "You cannot invoice yourself.";
+                 alertBox.classList.remove('d-none');
+                 return;
+            }
+
+            btn.textContent = "Saving...";
+
+            const payload = {
+                businessId: parseInt(userId),
+                customerId: parseInt(resolvedCustomerId),
+                customerName: document.getElementById('invCustomerName').value,
+                dueDate: document.getElementById('invDueDate').value,
+                items: itemsList
+            };
+
+            const createRes = await fetch('/invoices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const createData = await createRes.json();
+
             btn.disabled = false;
             btn.textContent = "Save as Draft";
-            if(data.success) {
+
+            if(createData.success) {
                 const modalEl = document.getElementById('createInvoiceModal');
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 modal.hide();
                 document.getElementById('createInvoiceForm').reset();
-                initInvoicePage(); // Refresh data
+                initInvoicePage();
             } else {
                 alertBox.className = 'alert alert-danger';
-                alertBox.textContent = data.message || "Failed to create invoice.";
+                alertBox.textContent = createData.message || "Failed to create invoice.";
                 alertBox.classList.remove('d-none');
             }
-        }).catch(err => {
+        } catch (err) {
             btn.disabled = false;
             btn.textContent = "Save as Draft";
             alertBox.className = 'alert alert-danger';
             alertBox.textContent = "Server error.";
             alertBox.classList.remove('d-none');
-        });
+        }
     });
 
     // ==========================================
@@ -379,23 +499,31 @@
     // ==========================================
 
     function sendInvoice(invoiceId) {
-        if(!confirm("Send this invoice to the customer?")) return;
-        fetch(`/invoices/${invoiceId}/send`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) initInvoicePage();
-                else alert(data.message);
-            });
+        revPayConfirm("Send this invoice to the customer?")
+        .then((confirmed) => {
+            if(confirmed) {
+                fetch(`/invoices/${invoiceId}/send`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) initInvoicePage();
+                        else alert(data.message);
+                    });
+            }
+        });
     }
 
     function cancelInvoice(invoiceId) {
-        if(!confirm("Are you sure you want to cancel this invoice?")) return;
-        fetch(`/invoices/${invoiceId}/cancel`, { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) initInvoicePage();
-                else alert(data.message);
-            });
+        revPayConfirm("Are you sure you want to cancel this invoice?")
+        .then((confirmed) => {
+            if(confirmed) {
+                fetch(`/invoices/${invoiceId}/cancel`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) initInvoicePage();
+                        else alert(data.message);
+                    });
+            }
+        });
     }
 
     function openPayModal(invoiceId, amount) {
