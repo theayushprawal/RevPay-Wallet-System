@@ -135,7 +135,9 @@
             const tbody = document.getElementById('incomingBody');
             tbody.innerHTML = '';
             const reqs = data.data || [];
-            reqs.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+
+            // FIXED: Changed requestDate to createdAt so the sorting actually works
+            reqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             if(reqs.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No incoming requests.</td></tr>';
@@ -145,12 +147,16 @@
             reqs.forEach(req => {
                 const badge = getStatusBadge(req.status);
                 let actions = '';
+                // Actions only show if the status is strictly PENDING
                 if(req.status === 'PENDING') {
                     actions = `
                         <button class="btn btn-sm btn-success fw-bold me-1 shadow-sm" onclick="openAcceptModal(${req.requestId})">Accept</button>
                         <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="declineReq(${req.requestId})">Decline</button>
                     `;
+                } else {
+                    actions = `<span class="text-muted small">No actions</span>`;
                 }
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="ps-4 fw-bold text-dark">${req.sender.fullName} <br><small class="text-muted fw-normal">ID: ${req.sender.userId}</small></td>
@@ -168,7 +174,9 @@
             const tbody = document.getElementById('outgoingBody');
             tbody.innerHTML = '';
             const reqs = data.data || [];
-            reqs.sort((a, b) => new Date(b.requestDate) - new Date(a.requestDate));
+
+            // FIXED: Changed requestDate to createdAt so the sorting actually works
+            reqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             if(reqs.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted">No outgoing requests.</td></tr>';
@@ -178,9 +186,13 @@
             reqs.forEach(req => {
                 const badge = getStatusBadge(req.status);
                 let actions = '';
+                // Actions only show if the status is strictly PENDING
                 if(req.status === 'PENDING') {
                     actions = `<button class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm" onclick="cancelReq(${req.requestId})">Cancel Request</button>`;
+                } else {
+                    actions = `<span class="text-muted small">No actions</span>`;
                 }
+
                 tbody.innerHTML += `
                     <tr>
                         <td class="ps-4 fw-bold text-dark">${req.receiver.fullName} <br><small class="text-muted fw-normal">ID: ${req.receiver.userId}</small></td>
@@ -194,11 +206,13 @@
         });
     }
 
+    // UPDATED: Added EXPIRED badge mapping and changed PENDING color
     function getStatusBadge(status) {
-        if(status === 'PENDING') return '<span class="badge bg-warning text-dark px-2 py-1 shadow-sm">PENDING</span>';
+        if(status === 'PENDING') return '<span class="badge bg-primary px-2 py-1 shadow-sm">PENDING</span>'; // Blue for pending
         if(status === 'ACCEPTED') return '<span class="badge bg-success px-2 py-1 shadow-sm">ACCEPTED</span>';
         if(status === 'DECLINED') return '<span class="badge bg-danger px-2 py-1 shadow-sm">DECLINED</span>';
         if(status === 'CANCELLED') return '<span class="badge bg-secondary px-2 py-1 shadow-sm">CANCELLED</span>';
+        if(status === 'EXPIRED') return '<span class="badge bg-warning text-dark px-2 py-1 shadow-sm">EXPIRED</span>'; // Orange for expired
         return `<span class="badge bg-dark">${status}</span>`;
     }
 
@@ -270,7 +284,7 @@
             if(createData.success) {
                 bootstrap.Modal.getInstance(document.getElementById('newRequestModal')).hide();
                 document.getElementById('newRequestForm').reset();
-                alert("Money request sent successfully!"); // Uses global custom alert
+                alert("Money request sent successfully!");
                 loadRequests();
             } else {
                 alertBox.className = 'alert alert-danger mb-3';
@@ -309,7 +323,7 @@
             if(data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('acceptModal')).hide();
                 document.getElementById('acceptForm').reset();
-                alert("Payment authorized successfully!"); // Uses global custom alert
+                alert("Payment authorized successfully!");
                 loadRequests();
             } else {
                 alertBox.className = 'alert alert-danger mb-3';

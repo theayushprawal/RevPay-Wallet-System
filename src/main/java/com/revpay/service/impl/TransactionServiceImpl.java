@@ -14,6 +14,7 @@ import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
 import com.revpay.model.enums.UserType;
+import com.revpay.model.enums.NotificationType;
 import com.revpay.repository.MoneyRequestRepository;
 
 import org.apache.logging.log4j.LogManager;
@@ -32,6 +33,7 @@ import com.revpay.repository.UserRepository;
 import com.revpay.repository.WalletRepository;
 import com.revpay.service.AuthService;
 import com.revpay.service.TransactionService;
+import com.revpay.service.NotificationService;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
@@ -43,17 +45,20 @@ public class TransactionServiceImpl implements TransactionService {
     private final WalletRepository walletRepository;
     private final AuthService authService;
     private final MoneyRequestRepository moneyRequestRepository;
+    private final NotificationService notificationService;
 
     public TransactionServiceImpl(TransactionRepository transactionRepository,
                                   UserRepository userRepository,
                                   WalletRepository walletRepository,
                                   AuthService authService,
-                                  MoneyRequestRepository moneyRequestRepository) {
+                                  MoneyRequestRepository moneyRequestRepository,
+                                  NotificationService notificationService) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.authService = authService;
         this.moneyRequestRepository = moneyRequestRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -153,6 +158,15 @@ public class TransactionServiceImpl implements TransactionService {
         // Save transactions
         transactionRepository.save(senderTxn);
         transactionRepository.save(receiverTxn);
+
+        BigDecimal senderNewBalance = senderWallet.getBalance();
+        if (senderNewBalance.compareTo(new BigDecimal("1000")) < 0) {
+            notificationService.sendNotification(
+                    senderId,
+                    "Low Balance Alert: Your wallet balance has dropped to ₹" + senderNewBalance + ". Please add funds.",
+                    NotificationType.LOW_BALANCE
+            );
+        }
 
         log.info("Money transfer successful: senderId={}, receiverId={}, amount={}",
                 senderId, receiverId, amount);

@@ -93,8 +93,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         log.info("Money request created requestId={} senderId={} receiverId={}",
                 request.getRequestId(), senderId, receiverId);
 
-        notificationService.createNotification(
-                receiver,
+        // Using preference-aware sendNotification
+        notificationService.sendNotification(
+                receiver.getUserId(),
                 "You received a money request of ₹" + amount + " from " + sender.getFullName(),
                 NotificationType.MONEY_REQUEST
         );
@@ -150,8 +151,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
         log.info("Money request accepted requestId={} amount={}",
                 requestId, request.getAmount());
 
-        notificationService.createNotification(
-                request.getSender(),
+        // Using preference-aware sendNotification
+        notificationService.sendNotification(
+                request.getSender().getUserId(),
                 "Your money request of ₹" + request.getAmount() + " was accepted by "
                         + receiver.getFullName(),
                 NotificationType.MONEY_REQUEST
@@ -188,8 +190,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
 
         log.info("Money request declined requestId={}", requestId);
 
-        notificationService.createNotification(
-                request.getSender(),
+        // Using preference-aware sendNotification
+        notificationService.sendNotification(
+                request.getSender().getUserId(),
                 "Your money request of ₹" + request.getAmount() + " was declined by "
                         + request.getReceiver().getFullName(),
                 NotificationType.MONEY_REQUEST
@@ -225,8 +228,9 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
 
         log.info("Money request cancelled requestId={}", requestId);
 
-        notificationService.createNotification(
-                request.getReceiver(),
+        // Using preference-aware sendNotification
+        notificationService.sendNotification(
+                request.getReceiver().getUserId(),
                 "Money request of ₹" + request.getAmount() + " was cancelled by "
                         + request.getSender().getFullName(),
                 NotificationType.MONEY_REQUEST
@@ -237,13 +241,41 @@ public class MoneyRequestServiceImpl implements MoneyRequestService {
     public List<MoneyRequest> getIncomingRequests(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return moneyRequestRepository.findByReceiver(user);
+
+        List<MoneyRequest> requests = moneyRequestRepository.findByReceiver(user);
+
+        // Check and auto-expire pending requests before returning them
+        return updateExpiredRequests(requests);
     }
 
     @Override
     public List<MoneyRequest> getOutgoingRequests(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        return moneyRequestRepository.findBySender(user);
+
+        List<MoneyRequest> requests = moneyRequestRepository.findBySender(user);
+
+        // Check and auto-expire pending requests before returning them
+        return updateExpiredRequests(requests);
+    }
+
+    // HELPER METHOD: Scans a list of requests and updates the database if any have expired
+    private List<MoneyRequest> updateExpiredRequests(List<MoneyRequest> requests) {
+        LocalDateTime now = LocalDateTime.now();
+        boolean needsSaving = false;
+
+        for (MoneyRequest request : requests) {
+            if (request.getStatus() == RequestStatus.PENDING && request.getExpiryDate().isBefore(now)) {
+                request.setStatus(RequestStatus.EXPIRED);
+                needsSaving = true;
+            }
+        }
+
+        if (needsSaving) {
+            // Save all the updated entities back to the database in one batch
+            moneyRequestRepository.saveAll(requests);
+        }
+
+        return requests;
     }
 }

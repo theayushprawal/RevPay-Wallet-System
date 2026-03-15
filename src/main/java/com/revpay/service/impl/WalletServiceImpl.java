@@ -5,6 +5,7 @@ import com.revpay.model.User;
 import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
+import com.revpay.model.enums.NotificationType;
 import com.revpay.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
@@ -15,6 +16,7 @@ import com.revpay.repository.UserRepository;
 import com.revpay.repository.WalletRepository;
 import com.revpay.service.AuthService;
 import com.revpay.service.WalletService;
+import com.revpay.service.NotificationService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,14 +30,17 @@ public class WalletServiceImpl implements WalletService {
     private final UserRepository userRepository;
     private final AuthService authService;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
 
     public WalletServiceImpl(WalletRepository walletRepository,
                              UserRepository userRepository,
-                             AuthService authService, TransactionRepository transactionRepository) {
+                             AuthService authService, TransactionRepository transactionRepository,
+                             NotificationService notificationService) {
         this.walletRepository = walletRepository;
         this.userRepository = userRepository;
         this.authService = authService;
         this.transactionRepository = transactionRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -176,6 +181,14 @@ public class WalletServiceImpl implements WalletService {
         txn.setRemarks("Withdrew funds to linked bank");
 
         transactionRepository.save(txn);
+
+        if (newBalance.compareTo(new BigDecimal("1000")) < 0) {
+            notificationService.sendNotification(
+                    userId,
+                    "Low Balance Alert: Your wallet balance has dropped to ₹" + newBalance + ". Please add funds.",
+                    NotificationType.LOW_BALANCE
+            );
+        }
 
         log.info("Withdrawal successful userId={} amount={} newBalance={}",
                 userId, amount, newBalance);

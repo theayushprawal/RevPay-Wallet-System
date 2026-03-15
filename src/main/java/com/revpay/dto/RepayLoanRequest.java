@@ -2,6 +2,7 @@ package com.revpay.dto;
 
 import java.math.BigDecimal;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -23,4 +24,7 @@ public class RepayLoanRequest {
     @NotNull(message = "Repayment amount is required")
     @Positive(message = "Repayment amount must be greater than zero")
     private BigDecimal amount;
+
+    @NotBlank(message = "Transaction PIN is required")
+    private String transactionPin;
 }

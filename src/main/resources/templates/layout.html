@@ -19,6 +19,12 @@
             font-weight: 700 !important;
             border-bottom: 3px solid #0d6efd;
         }
+        /* Custom styling for the tiny notification dots */
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            margin-top: -8px; /* Slightly raises the dot */
+        }
     </style>
 </head>
 <body>
@@ -34,8 +40,16 @@
             <ul class="navbar-nav mx-auto fw-semibold">
                 <li class="nav-item mx-1"><a class="nav-link text-dark" href="/dashboard">Dashboard</a></li>
                 <li class="nav-item mx-1"><a class="nav-link text-dark" href="/transactions">Transactions</a></li>
-                <li class="nav-item mx-1"><a class="nav-link text-dark" href="/requests">Requests</a></li>
-                <li class="nav-item mx-1"><a class="nav-link text-dark" href="/invoices">Invoices</a></li>
+                <li class="nav-item mx-1">
+                    <a class="nav-link text-dark d-flex align-items-center gap-1" href="/requests">
+                        Requests <span id="navReqDot" class="bg-danger rounded-circle nav-dot d-none"></span>
+                    </a>
+                </li>
+                <li class="nav-item mx-1">
+                    <a class="nav-link text-dark d-flex align-items-center gap-1" href="/invoices">
+                        Invoices <span id="navInvDot" class="bg-danger rounded-circle nav-dot d-none"></span>
+                    </a>
+                </li>
                 <li class="nav-item mx-1"><a class="nav-link text-dark" href="/loans">Loans</a></li>
                 <li class="nav-item mx-1"><a class="nav-link text-info" href="/analytics">📊 Analytics</a></li>
             </ul>
@@ -73,9 +87,10 @@
             const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
 
             navLinks.forEach(link => {
+                // Ensure exact match or sub-path match, ignoring the dots
                 if (link.getAttribute('href') === currentPath) {
                     link.classList.add('active-link');
-                    link.classList.remove('text-dark'); // Removes the default dark color so the blue pops
+                    link.classList.remove('text-dark');
                 }
             });
         });
@@ -137,7 +152,6 @@
                 const yesBtn = document.getElementById('globalConfirmYes');
                 const noBtn = document.getElementById('globalConfirmNo');
 
-                // Cleanup to prevent multiple click events stacking up
                 const cleanup = () => {
                     yesBtn.onclick = null;
                     noBtn.onclick = null;
@@ -147,7 +161,6 @@
                 yesBtn.onclick = () => { cleanup(); resolve(true); };
                 noBtn.onclick = () => { cleanup(); resolve(false); };
 
-                // If they click outside the modal to close it, treat as 'No'
                 modalEl.addEventListener('hidden.bs.modal', function onHide() {
                     cleanup();
                     resolve(false);
@@ -167,7 +180,6 @@
                     .then(data => {
                         const notifs = data.data || data;
                         if(Array.isArray(notifs)) {
-                            // Filter for unread notifications
                             const unreadCount = notifs.filter(n => n.isRead === 'NO').length;
                             const badge = document.getElementById('notifCount');
 
@@ -176,7 +188,7 @@
                                     badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
                                     badge.classList.remove('d-none');
                                 } else {
-                                    badge.classList.add('d-none'); // Hide if count hits 0
+                                    badge.classList.add('d-none');
                                 }
                             }
                         }
@@ -184,9 +196,48 @@
             }
         };
 
+        // NEW: GLOBAL ACTION DOTS (Requests & Invoices)
+        window.updateNavDots = function() {
+            const globalUserId = localStorage.getItem('userId');
+            if (!globalUserId) return;
+
+            // 1. Check Pending Money Requests
+            fetch(`/money-requests/incoming/${globalUserId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const reqs = data.data || [];
+                    const hasPending = reqs.some(req => req.status === 'PENDING');
+                    const dot = document.getElementById('navReqDot');
+                    if (dot) {
+                        if (hasPending) dot.classList.remove('d-none');
+                        else dot.classList.add('d-none');
+                    }
+                }).catch(() => console.log("Silent fail on nav dots requests"));
+
+            // 2. Check Pending/Overdue Invoices
+            fetch(`/invoices/customer/${globalUserId}`)
+                .then(res => res.json())
+                .then(data => {
+                    const invs = data.data || [];
+                    const hasPending = invs.some(inv => inv.status === 'SENT' || inv.status === 'OVERDUE');
+                    const dot = document.getElementById('navInvDot');
+                    if (dot) {
+                        if (hasPending) dot.classList.remove('d-none');
+                        else dot.classList.add('d-none');
+                    }
+                }).catch(() => console.log("Silent fail on nav dots invoices"));
+        };
+
         document.addEventListener("DOMContentLoaded", function() {
-            updateGlobalNotificationCount(); // Initial fetch on page load
-            setInterval(updateGlobalNotificationCount, 5000); // Fetch every 5 seconds
+            // Initial fetch on page load
+            updateGlobalNotificationCount();
+            updateNavDots();
+
+            // Fetch every 5 seconds to keep dots and bell live across all tabs!
+            setInterval(() => {
+                updateGlobalNotificationCount();
+                updateNavDots();
+            }, 5000);
         });
     </script>
 </div>

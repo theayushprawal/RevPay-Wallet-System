@@ -1,12 +1,14 @@
 package com.revpay.service.impl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode; // Added for decimal math
 import java.time.LocalDateTime;
 
 import com.revpay.dto.RepayLoanRequest;
 import com.revpay.model.*;
 import com.revpay.model.enums.*;
 import com.revpay.repository.*;
+import com.revpay.service.AuthService;
 import com.revpay.service.NotificationService;
 
 import org.apache.logging.log4j.LogManager;
@@ -36,21 +38,24 @@ public class LoanServiceImpl implements LoanService {
     private final TransactionRepository transactionRepository;
     private final NotificationService notificationService;
     private final RepaymentScheduleRepository repaymentScheduleRepository;
+    private final AuthService authService; // NEW: Added AuthService
 
+    // NEW: Updated constructor to include AuthService
     public LoanServiceImpl(LoanRepository loanRepository,
                            UserRepository userRepository,
                            WalletRepository walletRepository,
                            TransactionRepository transactionRepository,
                            NotificationService notificationService,
-                           RepaymentScheduleRepository repaymentScheduleRepository) {
+                           RepaymentScheduleRepository repaymentScheduleRepository,
+                           AuthService authService) {
 
         this.loanRepository = loanRepository;
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
         this.notificationService = notificationService;
-
         this.repaymentScheduleRepository = repaymentScheduleRepository;
+        this.authService = authService;
     }
 
     @Override
@@ -104,6 +109,20 @@ public class LoanServiceImpl implements LoanService {
         Loan loan = new Loan();
         loan.setBusiness(business);
         loan.setAmount(request.getAmount());
+
+        // Calculate EMI and Interest
+        BigDecimal annualInterestRate = new BigDecimal("12.00"); // 12% Flat Rate
+        BigDecimal principal = request.getAmount();
+        BigDecimal rate = annualInterestRate.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
+        BigDecimal timeInYears = new BigDecimal(request.getTenureMonths()).divide(new BigDecimal("12"), 4, RoundingMode.HALF_UP);
+
+        BigDecimal totalInterest = principal.multiply(rate).multiply(timeInYears);
+        BigDecimal totalPayable = principal.add(totalInterest);
+        BigDecimal emi = totalPayable.divide(new BigDecimal(request.getTenureMonths()), 2, RoundingMode.HALF_UP);
+
+        loan.setInterestRate(annualInterestRate);
+        loan.setEmi(emi);
+
         loan.setTenureMonths(request.getTenureMonths());
         loan.setPurpose(request.getPurpose());
         loan.setCreatedAt(LocalDateTime.now());
@@ -233,6 +252,12 @@ public class LoanServiceImpl implements LoanService {
             throw new IllegalStateException("Loan does not belong to this business");
         }
 
+        boolean pinValid = authService.verifyTransactionPin(business, request.getTransactionPin());
+        if (!pinValid) {
+            log.warn("Loan repayment failed: invalid transaction PIN businessId={}", business.getUserId());
+            throw new IllegalArgumentException("Invalid transaction PIN");
+        }
+
         // Fetch wallet
         Wallet wallet = walletRepository.findByUser(business)
                 .orElseThrow(() -> {
@@ -279,7 +304,10 @@ public class LoanServiceImpl implements LoanService {
                 .map(RepaymentSchedule::getEmi)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (totalPaid.compareTo(loan.getAmount()) >= 0) {
+        //  Calculate Total Payable to check for closure
+        BigDecimal totalPayable = loan.getEmi().multiply(new BigDecimal(loan.getTenureMonths()));
+
+        if (totalPaid.compareTo(totalPayable) >= 0) {
             loan.setStatus(LoanStatus.CLOSED);
             loanRepository.save(loan);
 

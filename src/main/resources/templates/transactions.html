@@ -93,14 +93,14 @@
                             <tr class="text-muted small text-uppercase border-bottom">
                                 <th class="ps-4">Date & Time</th>
                                 <th>Type</th>
-                                <th>Details</th>
+                                <th>Party</th> <th>Details</th>
                                 <th>Status</th>
                                 <th class="text-end pe-4">Amount</th>
                             </tr>
                             </thead>
                             <tbody id="historyTableBody">
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
+                                <td colspan="6" class="text-center text-muted py-5">
                                     <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
                                     Loading ledger...
                                 </td>
@@ -150,7 +150,7 @@
     function loadFilteredHistory(pageIndex) {
         currentPage = pageIndex;
         const tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Fetching data...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Fetching data...</td></tr>';
 
         // Build Payload from form
         const payload = { userId: parseInt(userId) };
@@ -204,7 +204,7 @@
                 });
 
                 if (myTransactions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-5">No transactions found matching criteria.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-5">No transactions found matching criteria.</td></tr>';
                     return;
                 }
 
@@ -219,6 +219,30 @@
                         amtColor = 'text-success'; sign = '+';
                     }
 
+                    // --- NEW LOGIC: DETERMINE PARTY ---
+                    let partyName = 'System';
+                    let partyId = '---';
+
+                    if (txn.txnType === 'SEND' && txn.receiver) {
+                        partyName = txn.receiver.businessProfile ? txn.receiver.businessProfile.businessName : txn.receiver.fullName;
+                        partyId = txn.receiver.userId;
+                    } else if (txn.txnType === 'RECEIVE' && txn.sender) {
+                        partyName = txn.sender.businessProfile ? txn.sender.businessProfile.businessName : txn.sender.fullName;
+                        partyId = txn.sender.userId;
+                    } else if (txn.txnType === 'DEPOSIT' || txn.txnType === 'WITHDRAW') {
+                        partyName = 'Linked Bank Account';
+                        partyId = 'Self';
+                    } else if (txn.txnType === 'LOAN_CREDIT' || txn.txnType === 'LOAN_REPAYMENT') {
+                        partyName = 'RevPay Capital';
+                        partyId = 'System';
+                    }
+
+                    let partyHtml = `
+                        <div class="fw-semibold text-dark">${partyName}</div>
+                        <div class="small text-muted fw-normal">ID: ${partyId}</div>
+                    `;
+                    // ----------------------------------
+
                     const amt = parseFloat(txn.amount).toLocaleString('en-IN', {minimumFractionDigits: 2});
                     const dateStr = new Date(txn.txnDate).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
 
@@ -226,18 +250,18 @@
                     tr.innerHTML = `
                         <td class="ps-4"><span class="text-muted small fw-bold">${dateStr}</span></td>
                         <td><span class="badge bg-light text-dark border">${txn.txnType.replace('_', ' ')}</span></td>
-                        <td><span class="small fw-semibold text-secondary">${txn.remarks || '---'}</span></td>
+                        <td>${partyHtml}</td> <td><span class="small fw-semibold text-secondary">${txn.remarks || '---'}</span></td>
                         <td><span class="badge ${statusBadge} shadow-sm">${txn.status}</span></td>
                         <td class="text-end pe-4 fw-bold ${amtColor}">${sign}₹${amt}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } else {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${data.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${data.message}</td></tr>`;
             }
         })
         .catch(error => {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Server error while loading history.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Server error while loading history.</td></tr>';
         });
     }
 </script>

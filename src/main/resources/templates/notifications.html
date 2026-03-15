@@ -4,7 +4,7 @@
 <body class="bg-light">
 <nav th:replace="~{layout :: navbar}"></nav>
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <h2 class="fw-bold text-primary mb-4">Notification Center</h2>
 
     <ul class="nav nav-pills mb-4 bg-white p-2 rounded-4 shadow-sm" id="notifTabs">
@@ -33,6 +33,16 @@
 </div>
 
 <div th:replace="~{layout :: scripts}"></div>
+<style>
+    /* Gives a subtle lift when hovering over actionable notifications */
+    .notif-card-actionable {
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .notif-card-actionable:hover {
+        transform: translateY(-2px);
+    }
+</style>
 <script>
     const userId = localStorage.getItem('userId');
 
@@ -41,6 +51,24 @@
         loadNotifications();
         loadPreferences();
     });
+
+    // Cleans up the raw database enum into nice title case (e.g., MONEY_REQUEST -> Money Request)
+    function formatNotificationType(type) {
+        if (!type) return 'Alert';
+        return type.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
+    }
+
+    // Maps the notification type to the correct URL shortcut
+    function getNotificationUrl(type) {
+        switch(type) {
+            case 'MONEY_REQUEST': return '/requests';
+            case 'INVOICE': return '/invoices';
+            case 'LOAN': return '/loans';
+            case 'TRANSACTION': return '/transactions';
+            case 'LOW_BALANCE': return '/dashboard'; // Sends user to add funds!
+            default: return null;
+        }
+    }
 
     function loadNotifications() {
         const container = document.getElementById('notifList');
@@ -55,17 +83,32 @@
                 }
                 notifs.forEach(n => {
                     const isUnread = n.isRead === 'NO';
+
+                    // Format type and determine routing link
+                    const displayType = formatNotificationType(n.type);
+                    const targetUrl = getNotificationUrl(n.type);
+
+                    // Make it visually clickable
+                    const clickableStyles = 'notif-card-actionable ' + (targetUrl ? 'shadow' : 'shadow-sm');
+
+                    // Call handleCardClick passing the URL and unread status
+                    const clickAction = `onclick="handleCardClick(${n.notificationId}, ${targetUrl ? `'${targetUrl}'` : 'null'}, ${isUnread})"`;
+
+                    // Clean up the date string to look a bit softer
+                    const dateStr = new Date(n.createdAt).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'});
+
                     const card = document.createElement('div');
                     card.className = 'col-12 mb-3';
+
                     card.innerHTML = `
-                        <div class="card shadow-sm border-0 rounded-4 ${isUnread ? 'border-start border-primary border-4' : 'opacity-75'}">
+                        <div class="card border-0 rounded-4 ${clickableStyles} ${isUnread ? 'border-start border-primary border-4' : 'opacity-75'}" ${clickAction}>
                             <div class="card-body d-flex justify-content-between align-items-center">
                                 <div>
-                                    <span class="badge bg-light text-primary mb-2">${n.type}</span>
-                                    <h6 class="mb-1 ${isUnread ? 'fw-bold' : ''}">${n.message}</h6>
-                                    <small class="text-muted">${new Date(n.createdAt).toLocaleString()}</small>
+                                    <span class="badge bg-light text-primary mb-2 fw-bold px-2 py-1 border border-primary-subtle">${displayType}</span>
+                                    <h6 class="mb-1 text-dark ${isUnread ? 'fw-bold' : ''}">${n.message}</h6>
+                                    <small class="text-muted">${dateStr}</small>
                                 </div>
-                                ${isUnread ? `<button class="btn btn-sm btn-outline-primary" onclick="markRead(${n.notificationId})">Mark Read</button>` : ''}
+                                ${isUnread ? `<button class="btn btn-sm btn-outline-primary fw-bold px-3 position-relative z-3" onclick="markRead(event, ${n.notificationId})">Mark Read</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -74,11 +117,35 @@
             });
     }
 
-    function markRead(id) {
+    // Handles clicking anywhere on the card
+    function handleCardClick(id, targetUrl, isUnread) {
+        if (!isUnread) {
+            if (targetUrl) window.location.href = targetUrl;
+            return;
+        }
+
         fetch(`/notifications/${id}/read`, { method: 'PATCH' })
             .then(() => {
-                loadNotifications(); // Reloads the notification list
-                // Instantly update the bell badge using the global function we just made!
+                if (targetUrl) {
+                    window.location.href = targetUrl;
+                } else {
+                    loadNotifications();
+                    if (typeof window.updateGlobalNotificationCount === 'function') {
+                        window.updateGlobalNotificationCount();
+                    }
+                }
+            })
+            .catch(() => {
+                if (targetUrl) window.location.href = targetUrl;
+            });
+    }
+
+    // Handles clicking the explicit "Mark Read" button
+    function markRead(event, id) {
+        event.stopPropagation();
+        fetch(`/notifications/${id}/read`, { method: 'PATCH' })
+            .then(() => {
+                loadNotifications();
                 if (typeof window.updateGlobalNotificationCount === 'function') {
                     window.updateGlobalNotificationCount();
                 }
@@ -86,26 +153,47 @@
     }
 
     function loadPreferences() {
-        const types = ['TRANSACTION', 'LOAN', 'INVOICE', 'SYSTEM'];
+        // REMOVED: 'LOAN' from the array
+        const types = ['LOW_BALANCE', 'MONEY_REQUEST', 'INVOICE', 'SYSTEM'];
         const container = document.getElementById('prefList');
-        container.innerHTML = '';
+        container.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Loading preferences...</div>';
 
-        types.forEach(type => {
-            const row = document.createElement('div');
-            row.className = 'd-flex justify-content-between align-items-center mb-3 border-bottom pb-3';
-            row.innerHTML = `
-                <div><span class="fw-bold">${type}</span><br><small class="text-muted">Receive alerts regarding ${type.toLowerCase()} updates</small></div>
-                <div class="form-check form-switch">
-                    <input class="form-switch-input h4" type="checkbox" role="switch" id="pref-${type}" checked onchange="togglePref('${type}', this.checked)">
-                </div>
-            `;
-            container.appendChild(row);
-        });
+        fetch(`/notifications/preferences/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                container.innerHTML = '';
+                const savedPrefs = data.data || [];
+
+                types.forEach(type => {
+                    let displayName = formatNotificationType(type);
+                    if (type === 'SYSTEM') displayName = 'System Updates';
+                    if (type === 'LOW_BALANCE') displayName = 'Low Balance Alerts';
+
+                    const prefRecord = savedPrefs.find(p => p.type === type);
+                    const isChecked = (prefRecord && prefRecord.enabled === 'NO') ? '' : 'checked';
+
+                    const row = document.createElement('div');
+                    row.className = 'd-flex justify-content-between align-items-center mb-3 border-bottom pb-3';
+                    row.innerHTML = `
+                        <div>
+                            <span class="fw-bold">${displayName}</span><br>
+                            <small class="text-muted">Receive alerts regarding ${displayName.toLowerCase()}</small>
+                        </div>
+                        <div class="form-check form-switch fs-4 m-0">
+                            <input class="form-check-input" style="cursor: pointer;" type="checkbox" role="switch" id="pref-${type}" ${isChecked} onchange="togglePref('${type}', this.checked)">
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            })
+            .catch(err => {
+                container.innerHTML = '<div class="text-center text-danger py-4">Failed to load preferences.</div>';
+            });
     }
 
     function togglePref(type, isEnabled) {
         const payload = {
-            userId: userId,
+            userId: parseInt(userId),
             type: type,
             enabled: isEnabled ? 'YES' : 'NO'
         };

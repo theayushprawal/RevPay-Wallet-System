@@ -160,9 +160,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         log.info("Invoice marked as SENT invoiceId={}", invoiceId);
 
         // Notify customer
+        String businessName = business.getFullName(); // fallback
+        if (business.getBusinessProfile() != null && business.getBusinessProfile().getBusinessName() != null) {
+            businessName = business.getBusinessProfile().getBusinessName();
+        }
+
         notificationService.sendNotification(
                 invoice.getCustomerId(),
-                "Invoice #" + invoice.getInvoiceId() + " has been sent",
+                "An invoice of ₹" + invoice.getTotalAmount() + " was received from " + businessName,
                 NotificationType.INVOICE
         );
     }
@@ -234,10 +239,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         log.info("Invoice paid successfully invoiceId={} amount={}",
                 invoiceId, invoice.getTotalAmount());
 
-        // Notify business
+        // --- NEW LOGIC: Formatted Business Notification ---
         notificationService.sendNotification(
                 business.getUserId(),
-                "Invoice #" + invoice.getInvoiceId() + " has been paid",
+                "Your invoice of ₹" + invoice.getTotalAmount() + " was paid by " + customer.getFullName(),
                 NotificationType.INVOICE
         );
     }

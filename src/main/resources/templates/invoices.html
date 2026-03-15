@@ -285,6 +285,7 @@
             });
     }
 
+    // FIXED: Added index for sequential numbering and formatted the Name + ID
     function renderInvoices(invoices, tbody, type) {
         tbody.innerHTML = '';
         if(!invoices || invoices.length === 0) {
@@ -292,7 +293,7 @@
             return;
         }
 
-        invoices.forEach(inv => {
+        invoices.forEach((inv, index) => {
             let badgeClass = 'bg-secondary';
             if(inv.status === 'SENT') badgeClass = 'bg-primary';
             if(inv.status === 'PAID') badgeClass = 'bg-success';
@@ -301,14 +302,26 @@
 
             const amt = parseFloat(inv.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:2});
             let otherParty = 'Unknown';
+
+            // Format the Name and ID depending on if we issued or received it
             if (type === 'issued') {
-                otherParty = inv.customerName;
+                otherParty = `
+                    <div class="fw-semibold">${inv.customerName}</div>
+                    <div class="small text-muted fw-normal">ID: ${inv.customerId}</div>
+                `;
             } else {
+                let bName = 'Unknown';
                 if (inv.business && inv.business.businessProfile && inv.business.businessProfile.businessName) {
-                    otherParty = inv.business.businessProfile.businessName;
+                    bName = inv.business.businessProfile.businessName;
                 } else if (inv.business) {
-                    otherParty = inv.business.fullName;
+                    bName = inv.business.fullName;
                 }
+                let bId = inv.business ? inv.business.userId : 'N/A';
+
+                otherParty = `
+                    <div class="fw-semibold">${bName}</div>
+                    <div class="small text-muted fw-normal">ID: ${bId}</div>
+                `;
             }
 
             // ALL invoices get a View button now
@@ -330,8 +343,8 @@
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="ps-4 fw-bold text-muted">#${inv.invoiceId}</td>
-                <td class="fw-semibold">${otherParty}</td>
+                <td class="ps-4 fw-bold text-muted">#${index + 1}</td>
+                <td>${otherParty}</td>
                 <td>${inv.dueDate}</td>
                 <td><span class="badge ${badgeClass}">${inv.status}</span></td>
                 <td class="text-end fw-bold">₹${amt}</td>
