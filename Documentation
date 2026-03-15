@@ -1,0 +1,439 @@
+# RevPay – Digital Wallet & Business Payments Platform
+
+## Project Documentation
+
+---
+
+# 1. Introduction
+
+RevPay is a full-stack financial web application designed to provide secure digital payment services for both personal and business users. The platform enables 
+users to manage digital wallets, perform peer-to-peer transactions, track financial activities, and receive real-time notifications through a web-based interface.
+
+The system supports two types of users: **Personal Account Users and Business Account Users**. 
+Personal users can send and receive money, manage payment methods, monitor transaction history, and maintain their digital wallet. 
+Business users receive additional capabilities such as accepting payments, generating invoices, managing customers, applying for loans, and analyzing business performance through analytics dashboards.
+
+RevPay is developed using modern enterprise technologies such as **Spring Boot for backend services, Spring Security for authentication and authorization, 
+Thymeleaf for server-side rendering, and Oracle Database for data management**. The application follows a **modular and layered architecture** consisting of 
+controllers, services, repositories, and models.
+The platform emphasizes **security, scalability, and usability**, implementing role-based access control, transaction validation, and secure password encryption. 
+By integrating financial operations with modern web technologies, RevPay demonstrates the implementation of a secure and scalable digital wallet and business 
+payment management system.
+
+---
+
+# 2. Objectives of the Project
+
+The primary objectives of the RevPay project are:
+
+• To develop a secure digital wallet platform for financial transactions
+• To enable peer-to-peer money transfers between users
+• To allow users to manage payment methods and wallet balance
+• To provide business users with tools for payment collection and invoice management
+• To implement role-based authentication and authorization
+• To provide transaction tracking and financial analytics
+• To demonstrate full-stack web application development using enterprise frameworks
+
+---
+
+# 3. Scope of the Project
+
+The scope of RevPay includes developing a web-based platform that supports digital financial transactions and business payment management.
+
+Personal users can:
+
+• Register and log in securely
+• Send and receive money
+• Request payments from other users
+• Manage payment methods such as debit or credit cards
+• View transaction history
+• Add money to wallet
+• Withdraw money from wallet
+• Receive notifications for financial activities
+
+Business users can:
+
+• Accept payments from customers
+• Generate invoices and manage billing
+• Track business revenue and financial analytics
+• Apply for business loans
+• View loan repayment schedules
+• Monitor payment trends and customer activity
+
+The system is designed for **educational and demonstration purposes**, but its architecture allows it to be extended into a scalable financial platform.
+
+---
+
+# 4. Technology Stack
+
+The RevPay application is built using the following technologies.
+
+### Backend
+
+• Java 17
+• Spring Boot 3.x
+
+### Security
+
+• Spring Security
+
+### ORM
+
+• Spring Data JPA
+• Hibernate
+
+### Template Engine
+
+• Thymeleaf
+
+### Database
+
+• Oracle Database
+• OJDBC Driver
+
+### Frontend
+
+• HTML
+• CSS
+• JavaScript
+• Bootstrap
+
+### Build Tool
+
+• Maven
+
+---
+
+# 5. System Architecture (Three-Tier Architecture)
+
+RevPay follows a **three-tier architecture**, separating the system into independent layers for better scalability, maintainability, and security.
+
+The three layers include:
+
+1. Presentation Layer
+2. Application Layer
+3. Database Layer
+
+---
+
+## 5.1 Presentation Layer (User Interface)
+
+The Presentation Layer provides the user interface where users interact with the system.
+
+Functions include:
+
+• Login and registration forms
+• Wallet dashboard
+• Transaction pages
+• Payment request interfaces
+• Invoice management screens
+• Business analytics dashboard
+• Notification center
+
+Technologies used:
+
+• HTML
+• CSS
+• JavaScript
+• Bootstrap
+• Thymeleaf
+
+This layer sends user requests to the application layer and displays the response returned by the system.
+
+---
+
+## 5.2 Application Layer (Business Logic)
+
+The Application Layer processes system logic and handles all operations related to transactions, security, and financial workflows.
+
+Main responsibilities include:
+
+• User authentication and authorization
+• Transaction processing
+• Wallet balance management
+• Invoice generation and payment processing
+• Loan application processing
+• Notification handling
+
+Technologies used:
+
+• Spring Boot
+• Spring Security
+• Hibernate
+
+---
+
+## 5.3 Database Layer (Data Storage)
+
+The Database Layer stores all persistent system data.
+
+Data stored includes:
+
+• User accounts
+• Business profiles
+• Wallet balances
+• Transactions
+• Payment methods
+• Loan applications
+• Invoices
+• Notifications
+
+The database used is:
+
+• Oracle Database
+
+---
+
+# 6. Project Structure
+
+RevPay follows a structured project architecture based on **Spring Boot layered architecture**.
+
+Main components include:
+
+• Controllers – Handle HTTP requests
+• Services – Implement business logic
+• Repositories – Manage database operations
+• Models – Represent application entities
+• DTOs – Transfer data between layers
+• Config – Security and application configurations
+
+This modular design improves maintainability and allows easier feature expansion.
+
+---
+
+# 7. User Roles
+
+RevPay supports two primary user roles.
+
+## 7.1 Personal Account User
+
+Personal users can:
+
+• Send and receive money
+• Request payments
+• Manage wallet balance
+• Add and manage payment methods
+• Track transactions
+• Receive notifications
+
+---
+
+## 7.2 Business Account User
+
+Business users have all personal user features plus:
+
+• Accept payments from customers
+• Create and manage invoices
+• Track business revenue
+• Apply for business loans
+• View financial analytics
+• Manage business profile
+
+---
+
+# 8. Functional Modules
+
+The RevPay system is divided into several functional modules.
+
+---
+
+## 8.1 Authentication and Security Module
+
+This module manages user identity verification and secure system access.
+
+Features include:
+
+• User registration
+• Secure login authentication
+• Password encryption
+• Role-based access control
+• Transaction PIN management
+
+Spring Security is used to protect system resources.
+
+---
+
+## 8.2 Wallet and Transaction Management Module
+
+This module manages financial transactions within the platform.
+
+Features include:
+
+• Send money to other users
+• Request money from users
+• Accept or decline payment requests
+• Add money to wallet
+• Withdraw funds
+• View transaction history
+
+---
+
+## 8.3 Payment Method Management Module
+
+Users can manage their linked payment methods.
+
+Features include:
+
+• Add credit or debit cards
+• Edit card details
+• Delete payment methods
+• Set default payment method
+
+---
+
+## 8.4 Invoice Management Module (Business)
+
+Business users can generate and manage invoices.
+
+Features include:
+
+• Create invoices with item details
+• Add customer information
+• Set payment terms and due dates
+• Track invoice status
+• Mark invoices as paid
+
+---
+
+## 8.5 Loan Management Module (Business)
+
+This module allows business users to apply for loans.
+
+Features include:
+
+• Submit loan application
+• Upload supporting documents
+• Track loan approval status
+• View loan details
+• Make loan repayments
+
+---
+
+## 8.6 Analytics Dashboard Module
+
+Business users can monitor financial performance.
+
+Features include:
+
+• Revenue reports
+• Transaction summaries
+• Payment trends
+• Outstanding invoices
+• Top customers analysis
+
+---
+
+## 8.7 Notification System
+
+The system provides real-time notifications for important activities.
+
+Notifications include:
+
+• Money received
+• Payment requests
+• Transaction confirmations
+• Invoice updates
+• Loan application status
+
+---
+
+# 9. Database Design
+
+The system uses an **Oracle relational database**.
+
+Main database entities include:
+
+• Users
+• Business Profiles
+• Wallets
+• Transactions
+• Payment Methods
+• Loan Applications
+• Invoices
+• Notifications
+
+Relationships between these entities allow the system to manage financial interactions efficiently.
+
+---
+
+# 10. Testing
+
+Testing ensures that the system functions correctly and securely.
+
+### Unit Testing
+
+Individual components such as:
+
+• Authentication services
+• Transaction processing
+• Invoice creation
+• Loan application logic
+
+were tested independently.
+
+---
+
+### Integration Testing
+
+Integration testing verifies interactions between:
+
+• Controllers and Services
+• Services and Repositories
+• Backend and Database
+
+---
+
+### User Testing
+
+User testing ensures the system works correctly from the user perspective.
+
+Tested activities include:
+
+• User registration
+• Sending money
+• Payment requests
+• Invoice generation
+• Loan application
+
+---
+
+# 11. Advantages of the System
+
+The RevPay platform provides several advantages:
+
+• Secure financial transaction management
+• Role-based functionality for personal and business users
+• Efficient wallet and payment method management
+• Invoice generation and billing support
+• Business analytics dashboard
+• Real-time notifications
+• Scalable and modular architecture
+
+---
+
+# 12. Future Enhancements
+
+Future improvements may include:
+
+• Integration with real payment gateways
+• Mobile application version
+• AI-based financial insights
+• Fraud detection system
+• Multi-currency support
+• Blockchain-based transaction verification
+
+---
+
+# 13. Conclusion
+
+RevPay demonstrates the successful implementation of a secure digital payment and financial management platform using modern full-stack development technologies. 
+The application integrates secure authentication, transaction processing, business analytics, and financial management features within a scalable architecture.
+By leveraging technologies such as **Spring Boot, Spring Security, Thymeleaf, and Oracle Database**, the system provides a reliable platform for both personal 
+and business financial operations. The modular architecture and layered design allow for easy maintenance and future expansion.
+
+Overall, RevPay serves as a strong example of how modern web technologies can be used to build secure and scalable financial applications that 
+support both individual users and businesses.
+
+---
+
+
