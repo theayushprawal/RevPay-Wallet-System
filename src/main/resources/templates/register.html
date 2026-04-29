@@ -127,6 +127,15 @@
 <div th:replace="~{layout :: scripts}"></div>
 
 <script>
+    // ==========================================
+    // Auto-Redirect if already logged in
+    // ==========================================
+    document.addEventListener("DOMContentLoaded", function() {
+        if (localStorage.getItem('jwt_token') && localStorage.getItem('userId')) {
+            window.location.replace('/dashboard');
+        }
+    });
+
     // Real-time Password Strength Checker
     function setupPasswordValidation(inputId, helpId) {
         const input = document.getElementById(inputId);
@@ -211,6 +220,10 @@
         }
 
         const alertBox = document.getElementById('messageAlert');
+        const btn = document.querySelector('button[type="submit"]');
+
+        btn.disabled = true;
+        btn.textContent = "Registering...";
 
         // 3. Send to AuthController
         fetch('/auth/register', {
@@ -222,6 +235,9 @@
         })
         .then(response => response.json())
         .then(data => {
+            btn.disabled = false;
+            btn.textContent = "Register Account";
+
             if(data.success) {
                 alertBox.className = 'alert alert-success';
                 alertBox.textContent = "Registration successful! Redirecting to login...";
@@ -235,6 +251,8 @@
             }
         })
         .catch(error => {
+            btn.disabled = false;
+            btn.textContent = "Register Account";
             alertBox.className = 'alert alert-danger';
             alertBox.textContent = "Server error. Please check backend logs.";
             alertBox.classList.remove('d-none');

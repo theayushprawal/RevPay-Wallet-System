@@ -1,5 +1,6 @@
 package com.revpay.service.impl;
 
+import com.revpay.dto.UserResponse;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,5 +84,19 @@ public class UserServiceImpl implements UserService {
     public User getUserById(Long userId) {
         // Fetches the user or returns null if they don't exist
         return userRepository.findById(userId).orElse(null);
+    }
+
+    @Override
+    public UserResponse getUserResponseById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return new UserResponse(
+                user.getUserId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getUserType().toString()
+        );
     }
 }

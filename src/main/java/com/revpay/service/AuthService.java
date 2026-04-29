@@ -1,5 +1,6 @@
 package com.revpay.service;
 
+import com.revpay.dto.AuthResponse;
 import com.revpay.model.User;
 import com.revpay.dto.RegisterRequest;
 
@@ -18,8 +19,9 @@ public interface AuthService {
      * Authenticates user using email or phone + password.
      * - Handles failed attempts
      * - Locks account if required
+     * - Generates and returns JWT inside AuthResponse
      */
-    User login(String loginId, String rawPassword);
+    AuthResponse login(String loginId, String rawPassword);
 
     /**
      * Change user password after verifying current password.
@@ -45,4 +47,5 @@ public interface AuthService {
      * Resets password using forget password
      */
     void resetPassword(Long userId, String newPassword);
+
 }

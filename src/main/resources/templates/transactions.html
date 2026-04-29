@@ -12,7 +12,7 @@
         <h2 class="fw-bold text-primary">Transaction Ledger</h2>
         <div>
             <button class="btn btn-outline-primary fw-bold me-2" onclick="loadFilteredHistory(0)">🔄 Refresh</button>
-            <a id="exportCsvBtn" class="btn btn-success fw-bold shadow-sm" href="#" target="_blank">📥 Download CSV</a>
+            <a id="exportCsvBtn" class="btn btn-success fw-bold shadow-sm" href="#">📥 Download CSV</a>
         </div>
     </div>
 
@@ -130,7 +130,41 @@
     document.addEventListener("DOMContentLoaded", function() {
         if (!userId) { window.location.href = '/login'; return; }
 
-        document.getElementById('exportCsvBtn').href = `/transactions/export/csv?userId=${userId}`;
+        // Secure JWT Download Handler for CSV Export
+        document.getElementById('exportCsvBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating...';
+            btn.classList.add('disabled');
+
+            fetch(`/transactions/export/csv?userId=${userId}`, { headers: getAuthHeaders() })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) {
+                        handleSecureResponse(res);
+                        return null;
+                    }
+                    return res.blob();
+                })
+                .then(blob => {
+                    if (!blob) return;
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `RevPay_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => alert("Error downloading CSV"))
+                .finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('disabled');
+                });
+        });
+
         loadFilteredHistory(0);
     });
 
@@ -176,13 +210,13 @@
         const max = document.getElementById('fMax').value;
         if(max) payload.maxAmount = parseFloat(max);
 
-        // Call the POST filter/paged endpoint
+        // Call the POST filter/paged endpoint with Auth Headers
         fetch(`/transactions/filter/paged?page=${currentPage}&size=10`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
         })
-        .then(response => response.json())
+        .then(handleSecureResponse)
         .then(data => {
             if (data.success && data.data) {
                 tbody.innerHTML = '';
@@ -261,7 +295,9 @@
             }
         })
         .catch(error => {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Server error while loading history.</td></tr>';
+            if (error.message !== "Unauthorized") {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Server error while loading history.</td></tr>';
+            }
         });
     }
 </script>

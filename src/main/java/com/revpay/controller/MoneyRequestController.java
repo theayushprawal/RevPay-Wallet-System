@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.revpay.model.MoneyRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.revpay.dto.ApiResponse;
@@ -24,6 +25,7 @@ public class MoneyRequestController {
      * CREATE MONEY REQUEST
      * Sender creates a request for receiver
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #senderId)")
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<Void>> createRequest(
             @RequestParam Long senderId,
@@ -31,26 +33,16 @@ public class MoneyRequestController {
             @RequestParam BigDecimal amount,
             @RequestParam(required = false) String note) {
 
-        moneyRequestService.createRequest(
-                senderId,
-                receiverId,
-                amount,
-                note
-        );
+        moneyRequestService.createRequest(senderId, receiverId, amount, note);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Money request created successfully",
-                        null
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Money request created successfully", null));
     }
 
     /**
      * ACCEPT MONEY REQUEST
      * Receiver accepts the request
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isMoneyRequestReceiver(authentication, #requestId)")
     @PostMapping("/accept")
     public ResponseEntity<ApiResponse<Void>> acceptRequest(
             @RequestParam Long requestId,
@@ -58,56 +50,41 @@ public class MoneyRequestController {
 
         moneyRequestService.acceptRequest(requestId, transactionPin);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Money request accepted",
-                        null
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Money request accepted", null));
     }
 
     /**
      * DECLINE MONEY REQUEST
      * Receiver declines the request
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isMoneyRequestReceiver(authentication, #requestId)")
     @PostMapping("/decline")
     public ResponseEntity<ApiResponse<Void>> declineRequest(
             @RequestParam Long requestId) {
 
         moneyRequestService.declineRequest(requestId);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Money request declined",
-                        null
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Money request declined", null));
     }
 
     /**
      * CANCEL MONEY REQUEST
      * Sender cancels the request
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isMoneyRequestSender(authentication, #requestId)")
     @PostMapping("/cancel")
     public ResponseEntity<ApiResponse<Void>> cancelRequest(
             @RequestParam Long requestId) {
 
         moneyRequestService.cancelRequest(requestId);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Money request cancelled",
-                        null
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Money request cancelled", null));
     }
 
     /**
      * GET INCOMING REQUESTS
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #userId)")
     @GetMapping("/incoming/{userId}")
     public ResponseEntity<ApiResponse<List<MoneyRequest>>> getIncomingRequests(@PathVariable Long userId) {
         List<MoneyRequest> requests = moneyRequestService.getIncomingRequests(userId);
@@ -117,6 +94,7 @@ public class MoneyRequestController {
     /**
      * GET OUTGOING REQUESTS
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #userId)")
     @GetMapping("/outgoing/{userId}")
     public ResponseEntity<ApiResponse<List<MoneyRequest>>> getOutgoingRequests(@PathVariable Long userId) {
         List<MoneyRequest> requests = moneyRequestService.getOutgoingRequests(userId);

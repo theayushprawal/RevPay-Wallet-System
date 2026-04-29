@@ -130,13 +130,14 @@
     });
 
     function loadRequests() {
-        // Load Incoming
-        fetch(`/money-requests/incoming/${userId}`).then(res => res.json()).then(data => {
+        // Load Incoming - ADDED HEADERS
+        fetch(`/money-requests/incoming/${userId}`, { headers: getAuthHeaders() })
+        .then(handleSecureResponse)
+        .then(data => {
             const tbody = document.getElementById('incomingBody');
             tbody.innerHTML = '';
             const reqs = data.data || [];
 
-            // FIXED: Changed requestDate to createdAt so the sorting actually works
             reqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             if(reqs.length === 0) {
@@ -147,7 +148,6 @@
             reqs.forEach(req => {
                 const badge = getStatusBadge(req.status);
                 let actions = '';
-                // Actions only show if the status is strictly PENDING
                 if(req.status === 'PENDING') {
                     actions = `
                         <button class="btn btn-sm btn-success fw-bold me-1 shadow-sm" onclick="openAcceptModal(${req.requestId})">Accept</button>
@@ -167,15 +167,17 @@
                     </tr>
                 `;
             });
-        });
+        })
+        .catch(err => { if(err.message !== "Unauthorized") console.error("Error loading incoming requests:", err); });
 
-        // Load Outgoing
-        fetch(`/money-requests/outgoing/${userId}`).then(res => res.json()).then(data => {
+        // Load Outgoing - ADDED HEADERS
+        fetch(`/money-requests/outgoing/${userId}`, { headers: getAuthHeaders() })
+        .then(handleSecureResponse)
+        .then(data => {
             const tbody = document.getElementById('outgoingBody');
             tbody.innerHTML = '';
             const reqs = data.data || [];
 
-            // FIXED: Changed requestDate to createdAt so the sorting actually works
             reqs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             if(reqs.length === 0) {
@@ -186,7 +188,6 @@
             reqs.forEach(req => {
                 const badge = getStatusBadge(req.status);
                 let actions = '';
-                // Actions only show if the status is strictly PENDING
                 if(req.status === 'PENDING') {
                     actions = `<button class="btn btn-sm btn-outline-warning text-dark fw-bold shadow-sm" onclick="cancelReq(${req.requestId})">Cancel Request</button>`;
                 } else {
@@ -203,28 +204,31 @@
                     </tr>
                 `;
             });
-        });
+        })
+        .catch(err => { if(err.message !== "Unauthorized") console.error("Error loading outgoing requests:", err); });
     }
 
-    // UPDATED: Added EXPIRED badge mapping and changed PENDING color
     function getStatusBadge(status) {
-        if(status === 'PENDING') return '<span class="badge bg-primary px-2 py-1 shadow-sm">PENDING</span>'; // Blue for pending
+        if(status === 'PENDING') return '<span class="badge bg-primary px-2 py-1 shadow-sm">PENDING</span>';
         if(status === 'ACCEPTED') return '<span class="badge bg-success px-2 py-1 shadow-sm">ACCEPTED</span>';
         if(status === 'DECLINED') return '<span class="badge bg-danger px-2 py-1 shadow-sm">DECLINED</span>';
         if(status === 'CANCELLED') return '<span class="badge bg-secondary px-2 py-1 shadow-sm">CANCELLED</span>';
-        if(status === 'EXPIRED') return '<span class="badge bg-warning text-dark px-2 py-1 shadow-sm">EXPIRED</span>'; // Orange for expired
+        if(status === 'EXPIRED') return '<span class="badge bg-warning text-dark px-2 py-1 shadow-sm">EXPIRED</span>';
         return `<span class="badge bg-dark">${status}</span>`;
     }
 
-    // --- USING THE GLOBAL revPayConfirm ---
     function declineReq(id) {
         revPayConfirm("Are you sure you want to decline this money request? This action cannot be undone.")
         .then((confirmed) => {
             if(confirmed) {
-                fetch(`/money-requests/decline?requestId=${id}`, { method: 'POST' }).then(() => {
+                // ADDED HEADERS
+                fetch(`/money-requests/decline?requestId=${id}`, { method: 'POST', headers: getAuthHeaders() })
+                .then(handleSecureResponse)
+                .then(() => {
                     alert("Request declined.");
                     loadRequests();
-                });
+                })
+                .catch(err => { if(err.message !== "Unauthorized") console.error("Error declining request:", err); });
             }
         });
     }
@@ -233,10 +237,14 @@
         revPayConfirm("Cancel this pending money request?")
         .then((confirmed) => {
             if(confirmed) {
-                fetch(`/money-requests/cancel?requestId=${id}`, { method: 'POST' }).then(() => {
+                // ADDED HEADERS
+                fetch(`/money-requests/cancel?requestId=${id}`, { method: 'POST', headers: getAuthHeaders() })
+                .then(handleSecureResponse)
+                .then(() => {
                     alert("Request cancelled.");
                     loadRequests();
-                });
+                })
+                .catch(err => { if(err.message !== "Unauthorized") console.error("Error cancelling request:", err); });
             }
         });
     }
@@ -255,8 +263,9 @@
         alertBox.classList.add('d-none');
 
         try {
-            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(receiverInput)}`);
-            const lookupData = await lookupRes.json();
+            // ADDED HEADERS
+            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(receiverInput)}`, { headers: getAuthHeaders() });
+            const lookupData = await handleSecureResponse(lookupRes);
 
             if (!lookupData.success) {
                 btn.disabled = false; btn.textContent = "Send Request";
@@ -276,8 +285,13 @@
             }
 
             btn.textContent = "Sending Request...";
-            const createRes = await fetch(`/money-requests/create?senderId=${userId}&receiverId=${resolvedReceiverId}&amount=${amt}&note=${encodeURIComponent(note)}`, { method: 'POST' });
-            const createData = await createRes.json();
+
+            // ADDED HEADERS
+            const createRes = await fetch(`/money-requests/create?senderId=${userId}&receiverId=${resolvedReceiverId}&amount=${amt}&note=${encodeURIComponent(note)}`, {
+                method: 'POST',
+                headers: getAuthHeaders()
+            });
+            const createData = await handleSecureResponse(createRes);
 
             btn.disabled = false; btn.textContent = "Send Request";
 
@@ -293,9 +307,11 @@
             }
         } catch (error) {
             btn.disabled = false; btn.textContent = "Send Request";
-            alertBox.className = 'alert alert-danger mb-3';
-            alertBox.textContent = "Server connection error.";
-            alertBox.classList.remove('d-none');
+            if (error.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger mb-3';
+                alertBox.textContent = "Server connection error.";
+                alertBox.classList.remove('d-none');
+            }
         }
     });
 
@@ -317,8 +333,13 @@
         btn.disabled = true; btn.textContent = "Processing...";
         alertBox.classList.add('d-none');
 
-        fetch(`/money-requests/accept?requestId=${id}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' })
-        .then(res => res.json()).then(data => {
+        // ADDED HEADERS
+        fetch(`/money-requests/accept?requestId=${id}&transactionPin=${encodeURIComponent(pin)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        })
+        .then(handleSecureResponse)
+        .then(data => {
             btn.disabled = false; btn.textContent = "Confirm & Pay";
             if(data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('acceptModal')).hide();
@@ -330,11 +351,13 @@
                 alertBox.textContent = data.message || "Failed to process payment.";
                 alertBox.classList.remove('d-none');
             }
-        }).catch(() => {
+        }).catch(err => {
             btn.disabled = false; btn.textContent = "Confirm & Pay";
-            alertBox.className = 'alert alert-danger mb-3';
-            alertBox.textContent = "Server error.";
-            alertBox.classList.remove('d-none');
+            if(err.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger mb-3';
+                alertBox.textContent = "Server error.";
+                alertBox.classList.remove('d-none');
+            }
         });
     });
 </script>

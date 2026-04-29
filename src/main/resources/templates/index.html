@@ -60,7 +60,7 @@
                 <li class="nav-item"><a class="nav-link text-dark" href="#vision">Our Vision</a></li>
                 <li class="nav-item"><a class="nav-link text-dark" href="#contact">Contact</a></li>
             </ul>
-            <div class="d-flex gap-3 mt-3 mt-lg-0">
+            <div class="d-flex gap-3 mt-3 mt-lg-0" id="navAuthButtons">
                 <a href="/login" class="btn btn-primary fw-bold px-4">Sign In</a>
                 <a href="/register" class="btn btn-outline-primary fw-bold px-4">Create Account</a>
             </div>
@@ -77,7 +77,7 @@
                     The secure, enterprise-grade financial platform for personal and business payments.
                 </p>
 
-                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center" id="heroAuthButtons">
                     <a href="/login" class="btn btn-primary btn-lg px-5 gap-3 fw-bold shadow-sm">Sign In</a>
                     <a href="/register" class="btn btn-outline-primary btn-lg px-5 fw-bold bg-white">Create Account</a>
                 </div>
@@ -214,6 +214,24 @@
 </footer>
 
 <div th:replace="~{layout :: scripts}"></div>
+
+<script>
+    // Smart Auth Check: If already logged in, change the buttons to "Dashboard"
+    document.addEventListener("DOMContentLoaded", function() {
+        if (localStorage.getItem("jwt_token") && localStorage.getItem("userId")) {
+
+            const navAuth = document.getElementById("navAuthButtons");
+            if (navAuth) {
+                navAuth.innerHTML = `<a href="/dashboard" class="btn btn-primary fw-bold px-4">Go to Dashboard</a>`;
+            }
+
+            const heroAuth = document.getElementById("heroAuthButtons");
+            if (heroAuth) {
+                heroAuth.innerHTML = `<a href="/dashboard" class="btn btn-primary btn-lg px-5 gap-3 fw-bold shadow-sm">Go to Dashboard ➔</a>`;
+            }
+        }
+    });
+</script>
 
 </body>
 </html>

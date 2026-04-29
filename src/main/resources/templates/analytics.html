@@ -10,7 +10,7 @@
             <h2 class="fw-bold text-primary mb-0">Analytics & Reports</h2>
             <p class="text-muted mb-0">Track your cash flow and top customers.</p>
         </div>
-        <a id="exportBtn" class="btn btn-success fw-bold shadow-sm px-4 py-2" href="#" target="_blank">
+        <a id="exportBtn" class="btn btn-success fw-bold shadow-sm px-4 py-2" href="#">
             📥 Download CSV Ledger
         </a>
     </div>
@@ -102,10 +102,44 @@
     document.addEventListener("DOMContentLoaded", function() {
         if (!userId) { window.location.href = '/login'; return; }
 
-        document.getElementById('exportBtn').href = `/transactions/export/csv?userId=${userId}`;
+        // Secure JWT Download Handler
+        document.getElementById('exportBtn').addEventListener('click', function(e) {
+            e.preventDefault();
 
-        fetch(`/users/${userId}`)
-            .then(res => res.json())
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Generating...';
+            btn.classList.add('disabled');
+
+            fetch(`/transactions/export/csv?userId=${userId}`, { headers: getAuthHeaders() })
+                .then(res => {
+                    if (res.status === 401 || res.status === 403) {
+                        handleSecureResponse(res); // Force logout logic
+                        return null;
+                    }
+                    return res.blob();
+                })
+                .then(blob => {
+                    if (!blob) return;
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `RevPay_Ledger_${new Date().toISOString().split('T')[0]}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(err => alert("Error downloading CSV"))
+                .finally(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('disabled');
+                });
+        });
+
+        // Add getAuthHeaders and handleSecureResponse to all fetches
+        fetch(`/users/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const user = data.data || data;
                 loadGeneralSummary();
@@ -115,12 +149,13 @@
                     loadTopCustomers();
                     loadRevenueReport();
                 }
-            });
+            })
+            .catch(err => console.error("Error loading user:", err));
     });
 
     function loadGeneralSummary() {
-        fetch(`/transactions/summary/${userId}`)
-            .then(res => res.json())
+        fetch(`/transactions/summary/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if (data.success && data.data) {
                     const summary = data.data;
@@ -129,12 +164,13 @@
                     document.getElementById('totalReceived').textContent =
                         '₹' + parseFloat(summary.totalReceived || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
                 }
-            });
+            })
+            .catch(err => console.error("Error loading summary:", err));
     }
 
     function loadTopCustomers() {
-        fetch(`/transactions/top-customers/${userId}`)
-            .then(res => res.json())
+        fetch(`/transactions/top-customers/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const tbody = document.getElementById('topCustomersBody');
                 tbody.innerHTML = '';
@@ -151,7 +187,6 @@
                     if (index === 1) rank = '🥈 2nd';
                     if (index === 2) rank = '🥉 3rd';
 
-                    // PERFECT MATCH TO YOUR DTO
                     const tCount = cust.totalTransactions || 0;
                     const tAmount = cust.totalRevenue || 0;
 
@@ -164,17 +199,17 @@
                         </tr>
                     `;
                 });
-            });
+            })
+            .catch(err => console.error("Error loading customers:", err));
     }
 
     function loadRevenueReport() {
-        fetch(`/transactions/revenue-report/${userId}`)
-            .then(res => res.json())
+        fetch(`/transactions/revenue-report/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if (data.success && data.data) {
                     const report = data.data;
 
-                    // PERFECT MATCH TO YOUR DTO
                     const dRev = report.dailyRevenue || 0;
                     const wRev = report.weeklyRevenue || 0;
                     const mRev = report.monthlyRevenue || 0;
@@ -183,7 +218,8 @@
                     document.getElementById('weeklyRev').textContent = '₹' + parseFloat(wRev).toLocaleString('en-IN', {minimumFractionDigits: 2});
                     document.getElementById('monthlyRev').textContent = '₹' + parseFloat(mRev).toLocaleString('en-IN', {minimumFractionDigits: 2});
                 }
-            });
+            })
+            .catch(err => console.error("Error loading revenue:", err));
     }
 </script>
 </body>

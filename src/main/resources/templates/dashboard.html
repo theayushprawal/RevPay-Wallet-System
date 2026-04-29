@@ -193,7 +193,13 @@
 
     document.addEventListener("DOMContentLoaded", function() {
         if (!userId) { window.location.href = '/login'; return; }
-        fetch(`/users/${userId}`).then(res => res.json()).then(data => { if(data.success) document.getElementById('welcomeMessage').textContent = `Welcome back, ${data.data.fullName.split(' ')[0]}!`; });
+
+        fetch(`/users/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
+            .then(data => {
+                if(data.success) document.getElementById('welcomeMessage').textContent = `Welcome back, ${data.data.fullName.split(' ')[0]}!`;
+            })
+            .catch(err => console.error(err));
 
         loadDashboardStats();
         loadRecentTransactions();
@@ -208,8 +214,8 @@
 
     // --- DASHBOARD STATS ---
     function loadDashboardStats() {
-        fetch(`/dashboard/summary?userId=${userId}`)
-            .then(res => res.json())
+        fetch(`/dashboard/summary?userId=${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if(data.success && data.data) {
                     const summary = data.data;
@@ -217,13 +223,14 @@
                     document.getElementById('pendingCount').textContent = (summary.pendingRequests || []).length;
                     document.getElementById('unreadCount').textContent = summary.unreadNotifications || 0;
                 }
-            });
+            })
+            .catch(err => console.error(err));
     }
 
     // --- RECENT TRANSACTIONS ---
     function loadRecentTransactions() {
-        fetch(`/transactions/history/${userId}`)
-            .then(res => res.json())
+        fetch(`/transactions/history/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const tbody = document.getElementById('recentTxnBody');
                 tbody.innerHTML = '';
@@ -266,7 +273,8 @@
                 } else {
                     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-5 text-muted">No recent transactions.</td></tr>';
                 }
-            });
+            })
+            .catch(err => console.error(err));
     }
 
     // --- SEND MONEY LOGIC ---
@@ -282,8 +290,8 @@
         btn.disabled = true; btn.textContent = "Looking up user..."; alertBox.classList.add('d-none');
 
         try {
-            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(receiverInput)}`);
-            const lookupData = await lookupRes.json();
+            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(receiverInput)}`, { headers: getAuthHeaders() });
+            const lookupData = await handleSecureResponse(lookupRes);
 
             if (!lookupData.success) {
                 btn.disabled = false; btn.textContent = "Authorize Transfer";
@@ -300,8 +308,8 @@
             btn.textContent = "Processing Transfer...";
             const url = `/transactions/send?senderId=${userId}&receiverId=${resolvedReceiverId}&amount=${amount}&transactionPin=${encodeURIComponent(transactionPin)}&remarks=${encodeURIComponent(remarks)}`;
 
-            const sendRes = await fetch(url, { method: 'POST' });
-            const sendData = await sendRes.json();
+            const sendRes = await fetch(url, { method: 'POST', headers: getAuthHeaders() });
+            const sendData = await handleSecureResponse(sendRes);
 
             btn.disabled = false; btn.textContent = "Authorize Transfer";
 
@@ -316,7 +324,9 @@
             }
         } catch (error) {
             btn.disabled = false; btn.textContent = "Authorize Transfer";
-            alertBox.className = 'alert alert-danger'; alertBox.textContent = "Server error."; alertBox.classList.remove('d-none');
+            if (error.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger'; alertBox.textContent = "Server error."; alertBox.classList.remove('d-none');
+            }
         }
     });
 
@@ -328,8 +338,8 @@
         const alertEl = document.getElementById('noPaymentMethodAlert');
         const depBtn = document.getElementById('depBtn');
 
-        fetch(`/payment-methods/${userId}`)
-            .then(res => res.json())
+        fetch(`/payment-methods/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const methods = data.data || data;
                 selectEl.innerHTML = '';
@@ -356,7 +366,8 @@
                     });
                     if (selectEl.selectedIndex === -1 && methods.length > 0) selectEl.selectedIndex = 0;
                 }
-            });
+            })
+            .catch(err => console.error(err));
     }
 
     // Fetch ONLY Banks for Withdraw
@@ -365,8 +376,8 @@
         const alertEl = document.getElementById('noBankMethodAlert');
         const withBtn = document.getElementById('withBtn');
 
-        fetch(`/payment-methods/${userId}`)
-            .then(res => res.json())
+        fetch(`/payment-methods/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const methods = data.data || data;
                 selectEl.innerHTML = '';
@@ -392,7 +403,8 @@
                     });
                     if (selectEl.selectedIndex === -1 && bankMethods.length > 0) selectEl.selectedIndex = 0;
                 }
-            });
+            })
+            .catch(err => console.error(err));
     }
 
     // Listeners to reload dropdowns
@@ -410,8 +422,11 @@
         btn.disabled = true;
         btn.textContent = 'Processing...';
 
-        fetch(`/wallet/deposit?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' })
-            .then(res => res.json())
+        fetch(`/wallet/deposit?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        })
+            .then(handleSecureResponse)
             .then(data => {
                 btn.disabled = false;
                 btn.textContent = 'Deposit';
@@ -424,7 +439,12 @@
                 } else {
                     alert(data.message || 'Deposit failed');
                 }
-            }).catch(() => { btn.disabled = false; btn.textContent = 'Deposit'; });
+            }).catch(err => {
+                if(err.message !== "Unauthorized") {
+                    btn.disabled = false;
+                    btn.textContent = 'Deposit';
+                }
+            });
     });
 
     document.getElementById('withdrawForm').addEventListener('submit', function(e) {
@@ -436,8 +456,11 @@
         btn.disabled = true;
         btn.textContent = 'Processing...';
 
-        fetch(`/wallet/withdraw?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, { method: 'POST' })
-            .then(res => res.json())
+        fetch(`/wallet/withdraw?userId=${userId}&amount=${amt}&transactionPin=${encodeURIComponent(pin)}`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        })
+            .then(handleSecureResponse)
             .then(data => {
                 btn.disabled = false;
                 btn.textContent = 'Withdraw';
@@ -450,7 +473,12 @@
                 } else {
                     alert(data.message || 'Withdrawal failed.');
                 }
-            }).catch(() => { btn.disabled = false; btn.textContent = 'Withdraw'; });
+            }).catch(err => {
+                if(err.message !== "Unauthorized") {
+                    btn.disabled = false;
+                    btn.textContent = 'Withdraw';
+                }
+            });
     });
 
 </script>

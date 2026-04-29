@@ -1,5 +1,7 @@
 package com.revpay.service.impl;
 
+import com.revpay.config.JwtUtil;
+import com.revpay.dto.AuthResponse;
 import com.revpay.dto.SecurityQuestionRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,18 +32,20 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final BusinessProfileRepository businessProfileRepository;
     private final SecurityQuestionRepository securityQuestionRepository;
+    private final JwtUtil jwtUtil;
 
     public AuthServiceImpl(UserRepository userRepository,
                            WalletRepository walletRepository,
                            BusinessProfileRepository businessProfileRepository,
                            SecurityQuestionRepository securityQuestionRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
 
         this.userRepository = userRepository;
         this.walletRepository = walletRepository;
         this.businessProfileRepository = businessProfileRepository;
         this.securityQuestionRepository = securityQuestionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -146,7 +150,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public User login(String loginId, String rawPassword) {
+    public AuthResponse login(String loginId, String rawPassword) {
 
         log.info("Login attempt for {}", loginId);
 
@@ -195,7 +199,18 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Login successful for userId={}", user.getUserId());
 
-        return user;
+        // Generate the JWT
+        String token = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getUserId(),
+                user.getUserType().name()
+        );
+        // Return DTo
+        return new AuthResponse(
+                token,
+                user.getUserId(),
+                user.getUserType().name()
+        );
     }
 
     @Override
