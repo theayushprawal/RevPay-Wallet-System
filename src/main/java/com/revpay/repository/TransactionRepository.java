@@ -3,10 +3,12 @@ package com.revpay.repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import com.revpay.dto.TopCustomerResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,26 +22,38 @@ import com.revpay.model.enums.TransactionType;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    // All transactions where user is sender
+    // OPTIMIZATION: Overriding findById for fast single-transaction views
+    @EntityGraph(attributePaths = {"sender", "receiver"})
+    Optional<Transaction> findById(Long id);
+
+    // OPTIMIZATION: Applied EntityGraphs to all list queries to fetch users in 1 JOIN
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findBySender(User sender);
 
-    // All transactions where user is receiver
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findByReceiver(User receiver);
 
-    // Filter by type
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findBySenderAndTxnType(User sender, TransactionType txnType);
 
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findByReceiverAndTxnType(User receiver, TransactionType txnType);
 
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findTop5BySenderOrReceiverOrderByTxnDateDesc(User sender, User receiver);
 
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findBySenderOrReceiver(User sender, User receiver);
 
-    // Filter by status
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findBySenderAndStatus(User sender, TransactionStatus status);
 
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     List<Transaction> findByReceiverAndStatus(User receiver, TransactionStatus status);
 
+    // OPTIMIZATION: Added EntityGraph. (A standard LEFT JOIN in JPQL doesn't fetch the data
+    // into the object unless you use 'FETCH', but EntityGraph handles it perfectly with Pagination!)
+    @EntityGraph(attributePaths = {"sender", "receiver"})
     @Query("""
     SELECT t
     FROM Transaction t
@@ -76,7 +90,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     );
 
 
-    //For outstanding invoice
+    // =================================================================================
+    // AGGREGATION & DTO QUERIES
+    // These only return numbers or DTOs. Zero risk of N+1.
+    // =================================================================================
+
     @Query("""
     SELECT COALESCE(SUM(t.amount),0)
     FROM Transaction t

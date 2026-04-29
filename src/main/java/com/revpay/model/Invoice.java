@@ -7,9 +7,17 @@ import java.util.List;
 
 import com.revpay.model.enums.InvoiceStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "INVOICES")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Invoice {
 
     @Id
@@ -18,7 +26,8 @@ public class Invoice {
     @Column(name = "INVOICE_ID")
     private Long invoiceId;
 
-    @ManyToOne
+    // OPTIMIZATION: @ManyToOne is EAGER by default. Changed to LAZY.
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "BUSINESS_ID")
     private User business;
 
@@ -41,49 +50,7 @@ public class Invoice {
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
+    // @OneToMany is LAZY by default, but writing it explicitly is best practice.
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<InvoiceItem> items;
-
-    public Invoice() {}
-
-    public Invoice(Long invoiceId, User business, Long customerId,
-                   String customerName, BigDecimal totalAmount,
-                   InvoiceStatus status, LocalDate dueDate,
-                   LocalDateTime createdAt) {
-        this.invoiceId = invoiceId;
-        this.business = business;
-        this.customerId = customerId;
-        this.customerName = customerName;
-        this.totalAmount = totalAmount;
-        this.status = status;
-        this.dueDate = dueDate;
-        this.createdAt = createdAt;
-    }
-
-    public Long getInvoiceId() { return invoiceId; }
-    public void setInvoiceId(Long invoiceId) { this.invoiceId = invoiceId; }
-
-    public User getBusiness() { return business; }
-    public void setBusiness(User business) { this.business = business; }
-
-    public Long getCustomerId() { return customerId; }
-    public void setCustomerId(Long customerId) { this.customerId = customerId; }
-
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
-
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
-
-    public InvoiceStatus getStatus() { return status; }
-    public void setStatus(InvoiceStatus status) { this.status = status; }
-
-    public LocalDate getDueDate() { return dueDate; }
-    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public List<InvoiceItem> getItems() { return items; }
-    public void setItems(List<InvoiceItem> items) { this.items = items; }
 }

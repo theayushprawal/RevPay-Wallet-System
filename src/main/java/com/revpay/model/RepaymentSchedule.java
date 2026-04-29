@@ -5,9 +5,17 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "REPAYMENT_SCHEDULE")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RepaymentSchedule {
 
     @Id
@@ -17,7 +25,7 @@ public class RepaymentSchedule {
     private Long repaymentId;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // OPTIMIZATION: Changed from EAGER (default) to LAZY
     @JoinColumn(name = "LOAN_ID")
     private Loan loan;
 
@@ -35,40 +43,4 @@ public class RepaymentSchedule {
 
     @Column(name = "REMARKS")
     private String remarks;
-
-    public RepaymentSchedule() {}
-
-    public RepaymentSchedule(Long repaymentId, Loan loan,
-                             BigDecimal balancePayment, BigDecimal emi,
-                             LocalDateTime paymentDate,
-                             String status, String remarks) {
-        this.repaymentId = repaymentId;
-        this.loan = loan;
-        this.balancePayment = balancePayment;
-        this.emi = emi;
-        this.paymentDate = paymentDate;
-        this.status = status;
-        this.remarks = remarks;
-    }
-
-    public Long getRepaymentId() { return repaymentId; }
-    public void setRepaymentId(Long repaymentId) { this.repaymentId = repaymentId; }
-
-    public Loan getLoan() { return loan; }
-    public void setLoan(Loan loan) { this.loan = loan; }
-
-    public BigDecimal getBalancePayment() { return balancePayment; }
-    public void setBalancePayment(BigDecimal balancePayment) { this.balancePayment = balancePayment; }
-
-    public BigDecimal getEmi() { return emi; }
-    public void setEmi(BigDecimal emi) { this.emi = emi; }
-
-    public LocalDateTime getPaymentDate() { return paymentDate; }
-    public void setPaymentDate(LocalDateTime paymentDate) { this.paymentDate = paymentDate; }
-
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String remarks) { this.remarks = remarks; }
 }

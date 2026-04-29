@@ -3,11 +3,17 @@ package com.revpay.model;
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "NOTIFICATION_PREFERENCES")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class NotificationPreference {
 
     @Id
@@ -15,7 +21,8 @@ public class NotificationPreference {
     @SequenceGenerator(name = "notif_pref_seq", sequenceName = "GEN_NOTIF_PREF_ID", allocationSize = 1)
     private Long preferenceId;
 
-    @ManyToOne
+    // OPTIMIZATION: Changed from EAGER (default) to LAZY
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "USER_ID")
     private User user;
 
