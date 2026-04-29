@@ -29,7 +29,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId)
-                .claim("role", "ROLE_" + role) // Adds the ROLE_ prefix Spring Security expects
+                .claim("role", role) // Not adding the ROLE_ prefix because we are using hasAuthority instead of hasRole
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
