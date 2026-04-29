@@ -6,9 +6,17 @@ import java.time.LocalDateTime;
 import com.revpay.model.enums.TransactionStatus;
 import com.revpay.model.enums.TransactionType;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "TRANSACTIONS")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Transaction {
 
     @Id
@@ -17,11 +25,13 @@ public class Transaction {
     @Column(name = "TXN_ID")
     private Long txnId;
 
-    @ManyToOne
+    // OPTIMIZATION: Changed from EAGER (default) to LAZY
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SENDER_ID")
     private User sender;
 
-    @ManyToOne
+    // OPTIMIZATION: Changed from EAGER (default) to LAZY
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "RECEIVER_ID")
     private User receiver;
 
@@ -41,44 +51,4 @@ public class Transaction {
 
     @Column(name = "TXN_DATE")
     private LocalDateTime txnDate;
-
-    public Transaction() {}
-
-    public Transaction(Long txnId, User sender, User receiver,
-                       BigDecimal amount, TransactionType txnType,
-                       TransactionStatus status, String remarks,
-                       LocalDateTime txnDate) {
-        this.txnId = txnId;
-        this.sender = sender;
-        this.receiver = receiver;
-        this.amount = amount;
-        this.txnType = txnType;
-        this.status = status;
-        this.remarks = remarks;
-        this.txnDate = txnDate;
-    }
-
-    public Long getTxnId() { return txnId; }
-    public void setTxnId(Long txnId) { this.txnId = txnId; }
-
-    public User getSender() { return sender; }
-    public void setSender(User sender) { this.sender = sender; }
-
-    public User getReceiver() { return receiver; }
-    public void setReceiver(User receiver) { this.receiver = receiver; }
-
-    public BigDecimal getAmount() { return amount; }
-    public void setAmount(BigDecimal amount) { this.amount = amount; }
-
-    public TransactionType getTxnType() { return txnType; }
-    public void setTxnType(TransactionType txnType) { this.txnType = txnType; }
-
-    public TransactionStatus getStatus() { return status; }
-    public void setStatus(TransactionStatus status) { this.status = status; }
-
-    public String getRemarks() { return remarks; }
-    public void setRemarks(String remarks) { this.remarks = remarks; }
-
-    public LocalDateTime getTxnDate() { return txnDate; }
-    public void setTxnDate(LocalDateTime txnDate) { this.txnDate = txnDate; }
 }

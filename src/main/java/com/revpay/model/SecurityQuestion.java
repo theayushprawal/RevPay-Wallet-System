@@ -2,9 +2,17 @@ package com.revpay.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "SECURITY_QUESTIONS")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class SecurityQuestion {
 
     @Id
@@ -14,7 +22,7 @@ public class SecurityQuestion {
     private Long sqId;
 
     @JsonIgnore
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY) // OPTIMIZATION: Changed from EAGER (default) to LAZY
     @JoinColumn(name = "USER_ID", unique = true)
     private User user;
 
@@ -23,25 +31,4 @@ public class SecurityQuestion {
 
     @Column(name = "ANSWER_HASH")
     private String answerHash;
-
-    public SecurityQuestion() {}
-
-    public SecurityQuestion(Long sqId, User user, String question, String answerHash) {
-        this.sqId = sqId;
-        this.user = user;
-        this.question = question;
-        this.answerHash = answerHash;
-    }
-
-    public Long getSqId() { return sqId; }
-    public void setSqId(Long sqId) { this.sqId = sqId; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public String getQuestion() { return question; }
-    public void setQuestion(String question) { this.question = question; }
-
-    public String getAnswerHash() { return answerHash; }
-    public void setAnswerHash(String answerHash) { this.answerHash = answerHash; }
 }

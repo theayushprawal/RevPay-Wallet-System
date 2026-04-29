@@ -6,9 +6,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.YesNoStatus;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "NOTIFICATIONS")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Notification {
 
     @Id
@@ -18,7 +26,7 @@ public class Notification {
     private Long notificationId;
 
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY) // OPTIMIZATION: Changed from EAGER (default) to LAZY
     @JoinColumn(name = "USER_ID")
     private User user;
 
@@ -35,35 +43,4 @@ public class Notification {
 
     @Column(name = "CREATED_AT")
     private LocalDateTime createdAt;
-
-    public Notification() {}
-
-    public Notification(Long notificationId, User user,
-                        String message, NotificationType type,
-                        YesNoStatus isRead, LocalDateTime createdAt) {
-        this.notificationId = notificationId;
-        this.user = user;
-        this.message = message;
-        this.type = type;
-        this.isRead = isRead;
-        this.createdAt = createdAt;
-    }
-
-    public Long getNotificationId() { return notificationId; }
-    public void setNotificationId(Long notificationId) { this.notificationId = notificationId; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-
-    public NotificationType getType() { return type; }
-    public void setType(NotificationType type) { this.type = type; }
-
-    public YesNoStatus getIsRead() { return isRead; }
-    public void setIsRead(YesNoStatus isRead) { this.isRead = isRead; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -5,9 +5,17 @@ import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "WALLETS")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Wallet {
 
     @Id
@@ -17,7 +25,7 @@ public class Wallet {
     private Long walletId;
 
     @JsonIgnore
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY) // OPTIMIZATION: Changed from EAGER (default) to LAZY
     @JoinColumn(name = "USER_ID")
     private User user;
 
@@ -26,25 +34,4 @@ public class Wallet {
 
     @Column(name = "LAST_UPDATED")
     private LocalDateTime lastUpdated;
-
-    public Wallet() {}
-
-    public Wallet(Long walletId, User user, BigDecimal balance, LocalDateTime lastUpdated) {
-        this.walletId = walletId;
-        this.user = user;
-        this.balance = balance;
-        this.lastUpdated = lastUpdated;
-    }
-
-    public Long getWalletId() { return walletId; }
-    public void setWalletId(Long walletId) { this.walletId = walletId; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public BigDecimal getBalance() { return balance; }
-    public void setBalance(BigDecimal balance) { this.balance = balance; }
-
-    public LocalDateTime getLastUpdated() { return lastUpdated; }
-    public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
 }
