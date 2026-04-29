@@ -105,7 +105,6 @@
             cardFields.classList.remove('d-none');
             bankFields.classList.add('d-none');
 
-            // Add required logic for Card
             document.getElementById('pmCardNumber').required = true;
             document.getElementById('pmAccountNumber').required = false;
             document.getElementById('pmIfsc').required = false;
@@ -113,7 +112,6 @@
             cardFields.classList.add('d-none');
             bankFields.classList.remove('d-none');
 
-            // Add required logic for Bank
             document.getElementById('pmCardNumber').required = false;
             document.getElementById('pmAccountNumber').required = true;
             document.getElementById('pmIfsc').required = true;
@@ -124,8 +122,9 @@
     function loadPaymentMethods() {
         const container = document.getElementById('methodsContainer');
 
-        fetch(`/payment-methods/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/payment-methods/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 container.innerHTML = '';
                 const methods = data.data || data;
@@ -184,7 +183,8 @@
                         </div>
                     `;
                 });
-            });
+            })
+            .catch(err => { if(err.message !== "Unauthorized") console.error("Error loading payment methods", err); });
     }
 
     // 3. SUBMIT NEW METHOD
@@ -194,7 +194,6 @@
         const btn = document.getElementById('saveBtn');
         const isCard = document.getElementById('typeCard').checked;
 
-        // Billing address is now always included!
         const payload = {
             userId: parseInt(userId),
             methodType: isCard ? 'CARD' : 'BANK',
@@ -203,7 +202,6 @@
             isDefault: document.getElementById('pmDefault').checked
         };
 
-        // Inject fields based on what the backend validation expects
         if (isCard) {
             payload.cardNumber = document.getElementById('pmCardNumber').value;
             payload.expiryDate = document.getElementById('pmExpiry').value;
@@ -215,18 +213,18 @@
 
         btn.disabled = true; btn.textContent = 'Saving...';
 
+        // ADDED HEADERS FOR POST
         fetch('/payment-methods', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
         })
-        .then(res => res.json())
+        .then(handleSecureResponse)
         .then(data => {
             btn.disabled = false; btn.textContent = 'Save Account';
             if (data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('addMethodModal')).hide();
                 document.getElementById('addMethodForm').reset();
-                // Reset to default state
                 document.getElementById('typeCard').checked = true;
                 toggleFormFields();
                 loadPaymentMethods();
@@ -235,25 +233,33 @@
                 alertBox.textContent = data.message || "Failed to add method.";
                 alertBox.classList.remove('d-none');
             }
-        }).catch(() => {
+        }).catch(err => {
             btn.disabled = false; btn.textContent = 'Save Account';
-            alertBox.className = 'alert alert-danger';
-            alertBox.textContent = "Server error occurred.";
-            alertBox.classList.remove('d-none');
+            if(err.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = "Server error occurred.";
+                alertBox.classList.remove('d-none');
+            }
         });
     });
 
     // 4. ACTION BUTTONS
     function setDefault(pmId) {
-        fetch(`/payment-methods/${userId}/${pmId}/default`, { method: 'POST' })
-            .then(() => loadPaymentMethods());
+        // ADDED HEADERS
+        fetch(`/payment-methods/${userId}/${pmId}/default`, { method: 'POST', headers: getAuthHeaders() })
+            .then(handleSecureResponse)
+            .then(() => loadPaymentMethods())
+            .catch(err => { if(err.message !== "Unauthorized") console.error(err); });
     }
 
     async function deleteMethod(pmId) {
         const confirmed = await window.revPayConfirm("Are you sure you want to remove this linked account?");
         if (confirmed) {
-            fetch(`/payment-methods/${userId}/${pmId}`, { method: 'DELETE' })
-                .then(() => loadPaymentMethods());
+            // ADDED HEADERS
+            fetch(`/payment-methods/${userId}/${pmId}`, { method: 'DELETE', headers: getAuthHeaders() })
+                .then(handleSecureResponse)
+                .then(() => loadPaymentMethods())
+                .catch(err => { if(err.message !== "Unauthorized") console.error(err); });
         }
     }
 </script>

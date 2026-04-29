@@ -217,7 +217,6 @@
     const userId = localStorage.getItem('userId');
     let currentUserType = 'PERSONAL';
 
-    // NEW: Global arrays to store fetched invoice data for the View Modal
     let globalIssuedInvoices = [];
     let globalReceivedInvoices = [];
 
@@ -231,8 +230,9 @@
     });
 
     function initInvoicePage() {
-        fetch(`/users/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/users/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if (data.success || data.userId) {
                     const user = data.data || data;
@@ -245,12 +245,14 @@
                     }
                     loadCustomerInvoices();
                 }
-            });
+            })
+            .catch(err => console.error("Error initializing invoice page:", err));
     }
 
     function loadBusinessSummary() {
-        fetch(`/invoices/summary/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/invoices/summary/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if(data.success && data.data) {
                     const s = data.data;
@@ -258,34 +260,38 @@
                     document.getElementById('sumPending').textContent = '₹' + parseFloat(s.totalPending || 0).toLocaleString('en-IN');
                     document.getElementById('sumOverdue').textContent = '₹' + parseFloat(s.totalOverdue || 0).toLocaleString('en-IN');
                 }
-            });
+            })
+            .catch(err => console.error("Error loading business summary:", err));
     }
 
     function loadBusinessInvoices() {
         const tbody = document.getElementById('issuedInvoicesBody');
-        fetch(`/invoices/business/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/invoices/business/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if(data.success) {
-                    globalIssuedInvoices = data.data || []; // Store globally
+                    globalIssuedInvoices = data.data || [];
                     renderInvoices(globalIssuedInvoices, tbody, 'issued');
                 }
-            });
+            })
+            .catch(err => console.error("Error loading business invoices:", err));
     }
 
     function loadCustomerInvoices() {
         const tbody = document.getElementById('receivedInvoicesBody');
-        fetch(`/invoices/customer/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/invoices/customer/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 if(data.success) {
-                    globalReceivedInvoices = data.data || []; // Store globally
+                    globalReceivedInvoices = data.data || [];
                     renderInvoices(globalReceivedInvoices, tbody, 'received');
                 }
-            });
+            })
+            .catch(err => console.error("Error loading customer invoices:", err));
     }
 
-    // FIXED: Added index for sequential numbering and formatted the Name + ID
     function renderInvoices(invoices, tbody, type) {
         tbody.innerHTML = '';
         if(!invoices || invoices.length === 0) {
@@ -303,7 +309,6 @@
             const amt = parseFloat(inv.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits:2});
             let otherParty = 'Unknown';
 
-            // Format the Name and ID depending on if we issued or received it
             if (type === 'issued') {
                 otherParty = `
                     <div class="fw-semibold">${inv.customerName}</div>
@@ -324,7 +329,6 @@
                 `;
             }
 
-            // ALL invoices get a View button now
             let viewBtn = `<button class="btn btn-sm btn-outline-secondary me-1 shadow-sm fw-bold" onclick="viewInvoiceDetails(${inv.invoiceId}, '${type}')">👁️ View</button>`;
 
             let actions = '';
@@ -354,17 +358,12 @@
         });
     }
 
-    // ==========================================
-    // NEW: VIEW INVOICE LOGIC
-    // ==========================================
     function viewInvoiceDetails(invoiceId, type) {
-        // Find the invoice in our global arrays
         let invList = type === 'issued' ? globalIssuedInvoices : globalReceivedInvoices;
         let inv = invList.find(i => i.invoiceId === invoiceId);
 
         if(!inv) return;
 
-        // Populate Sender/Receiver Info
         if(type === 'issued') {
             document.getElementById('viewFrom').innerHTML = 'Your Business';
             document.getElementById('viewTo').innerHTML = `${inv.customerName}<br><span class="text-muted small fw-normal">ID: ${inv.customerId}</span>`;
@@ -374,7 +373,6 @@
             document.getElementById('viewTo').innerHTML = 'You';
         }
 
-        // Populate Items Table
         const tbody = document.getElementById('viewInvoiceItemsBody');
         tbody.innerHTML = '';
 
@@ -394,17 +392,10 @@
              tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No line items found.</td></tr>';
         }
 
-        // Set Grand Total
         document.getElementById('viewGrandTotal').textContent = '₹' + parseFloat(inv.totalAmount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
 
-        // Show Modal
         new bootstrap.Modal(document.getElementById('viewInvoiceModal')).show();
     }
-
-
-    // ==========================================
-    // CREATE INVOICE LOGIC
-    // ==========================================
 
     function addInvoiceItemRow() {
         const container = document.getElementById('itemsContainer');
@@ -444,8 +435,9 @@
         alertBox.classList.add('d-none');
 
         try {
-            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(identifier)}`);
-            const lookupData = await lookupRes.json();
+            // ADDED HEADERS FOR LOOKUP
+            const lookupRes = await fetch(`/users/lookup?identifier=${encodeURIComponent(identifier)}`, { headers: getAuthHeaders() });
+            const lookupData = await handleSecureResponse(lookupRes);
 
             if (!lookupData.success) {
                 btn.disabled = false;
@@ -477,12 +469,13 @@
                 items: itemsList
             };
 
+            // ADDED HEADERS FOR POST
             const createRes = await fetch('/invoices', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
-            const createData = await createRes.json();
+            const createData = await handleSecureResponse(createRes);
 
             btn.disabled = false;
             btn.textContent = "Save as Draft";
@@ -501,26 +494,26 @@
         } catch (err) {
             btn.disabled = false;
             btn.textContent = "Save as Draft";
-            alertBox.className = 'alert alert-danger';
-            alertBox.textContent = "Server error.";
-            alertBox.classList.remove('d-none');
+            if (err.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = "Server error.";
+                alertBox.classList.remove('d-none');
+            }
         }
     });
-
-    // ==========================================
-    // ACTION BUTTON LOGIC
-    // ==========================================
 
     function sendInvoice(invoiceId) {
         revPayConfirm("Send this invoice to the customer?")
         .then((confirmed) => {
             if(confirmed) {
-                fetch(`/invoices/${invoiceId}/send`, { method: 'POST' })
-                    .then(res => res.json())
+                // ADDED HEADERS
+                fetch(`/invoices/${invoiceId}/send`, { method: 'POST', headers: getAuthHeaders() })
+                    .then(handleSecureResponse)
                     .then(data => {
                         if(data.success) initInvoicePage();
                         else alert(data.message);
-                    });
+                    })
+                    .catch(err => { if (err.message !== "Unauthorized") console.error("Error sending invoice", err); });
             }
         });
     }
@@ -529,12 +522,14 @@
         revPayConfirm("Are you sure you want to cancel this invoice?")
         .then((confirmed) => {
             if(confirmed) {
-                fetch(`/invoices/${invoiceId}/cancel`, { method: 'POST' })
-                    .then(res => res.json())
+                // ADDED HEADERS
+                fetch(`/invoices/${invoiceId}/cancel`, { method: 'POST', headers: getAuthHeaders() })
+                    .then(handleSecureResponse)
                     .then(data => {
                         if(data.success) initInvoicePage();
                         else alert(data.message);
-                    });
+                    })
+                    .catch(err => { if (err.message !== "Unauthorized") console.error("Error cancelling invoice", err); });
             }
         });
     }
@@ -559,10 +554,12 @@
         btn.disabled = true;
         btn.textContent = "Processing...";
 
+        // ADDED HEADERS
         fetch(`/invoices/${invoiceId}/pay?customerId=${userId}&transactionPin=${encodeURIComponent(pin)}`, {
-            method: 'POST'
+            method: 'POST',
+            headers: getAuthHeaders()
         })
-        .then(res => res.json())
+        .then(handleSecureResponse)
         .then(data => {
             btn.disabled = false;
             btn.textContent = "Confirm Payment";
@@ -579,9 +576,11 @@
         }).catch(err => {
             btn.disabled = false;
             btn.textContent = "Confirm Payment";
-            alertBox.className = 'alert alert-danger';
-            alertBox.textContent = "Server error.";
-            alertBox.classList.remove('d-none');
+            if (err.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = "Server error.";
+                alertBox.classList.remove('d-none');
+            }
         });
     });
 

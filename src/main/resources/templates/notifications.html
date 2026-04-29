@@ -72,8 +72,9 @@
 
     function loadNotifications() {
         const container = document.getElementById('notifList');
-        fetch(`/notifications/user/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/notifications/user/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 container.innerHTML = '';
                 const notifs = data.data || data;
@@ -114,7 +115,8 @@
                     `;
                     container.appendChild(card);
                 });
-            });
+            })
+            .catch(err => { if(err.message !== "Unauthorized") console.error("Error loading notifications:", err); });
     }
 
     // Handles clicking anywhere on the card
@@ -124,7 +126,9 @@
             return;
         }
 
-        fetch(`/notifications/${id}/read`, { method: 'PATCH' })
+        // ADDED HEADERS
+        fetch(`/notifications/${id}/read`, { method: 'PATCH', headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(() => {
                 if (targetUrl) {
                     window.location.href = targetUrl;
@@ -135,31 +139,35 @@
                     }
                 }
             })
-            .catch(() => {
-                if (targetUrl) window.location.href = targetUrl;
+            .catch(err => {
+                if (err.message !== "Unauthorized" && targetUrl) window.location.href = targetUrl;
             });
     }
 
     // Handles clicking the explicit "Mark Read" button
     function markRead(event, id) {
         event.stopPropagation();
-        fetch(`/notifications/${id}/read`, { method: 'PATCH' })
+
+        // ADDED HEADERS
+        fetch(`/notifications/${id}/read`, { method: 'PATCH', headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(() => {
                 loadNotifications();
                 if (typeof window.updateGlobalNotificationCount === 'function') {
                     window.updateGlobalNotificationCount();
                 }
-            });
+            })
+            .catch(err => { if(err.message !== "Unauthorized") console.error(err); });
     }
 
     function loadPreferences() {
-        // REMOVED: 'LOAN' from the array
         const types = ['LOW_BALANCE', 'MONEY_REQUEST', 'INVOICE', 'SYSTEM'];
         const container = document.getElementById('prefList');
         container.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary"></div> Loading preferences...</div>';
 
-        fetch(`/notifications/preferences/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/notifications/preferences/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 container.innerHTML = '';
                 const savedPrefs = data.data || [];
@@ -187,7 +195,9 @@
                 });
             })
             .catch(err => {
-                container.innerHTML = '<div class="text-center text-danger py-4">Failed to load preferences.</div>';
+                if(err.message !== "Unauthorized") {
+                    container.innerHTML = '<div class="text-center text-danger py-4">Failed to load preferences.</div>';
+                }
             });
     }
 
@@ -197,11 +207,15 @@
             type: type,
             enabled: isEnabled ? 'YES' : 'NO'
         };
+
+        // ADDED HEADERS
         fetch('/notifications/preferences', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
-        });
+        })
+        .then(handleSecureResponse)
+        .catch(err => { if(err.message !== "Unauthorized") console.error("Error toggling preference:", err); });
     }
 </script>
 </body>

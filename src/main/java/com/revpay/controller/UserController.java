@@ -1,9 +1,11 @@
 package com.revpay.controller;
 
+import com.revpay.dto.UserResponse;
 import com.revpay.model.User;
 import com.revpay.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.revpay.dto.ApiResponse;
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
+@PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS')") // Must be a RevPay user
 public class UserController {
 
     private final UserService userService;
@@ -27,6 +30,8 @@ public class UserController {
     /**
      * UPDATE PROFILE
      */
+    // IDOR protection using the userId inside the request body
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #request.userId)")
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<Void>> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request) {
@@ -34,34 +39,31 @@ public class UserController {
         userService.updateProfile(request);
 
         return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Profile updated successfully",
-                        null
-                )
+                new ApiResponse<>(true, "Profile updated successfully", null)
         );
     }
 
     /**
      * GET PROFILE
      */
+    // IDOR protection - a user can only view their own detailed profile object
+
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #id)")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> getUserProfile(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(@PathVariable Long id) {
 
-        // Calling your newly created Service method!
-        User user = userService.getUserById(id);
+        UserResponse response = userService.getUserResponseById(id);
 
-        if (user == null) {
-            return ResponseEntity.badRequest()
-                    .body(new ApiResponse<>(false, "User not found", null));
-        }
-
-        return ResponseEntity.ok(new ApiResponse<>(true, "Profile loaded successfully", user));
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Profile loaded successfully", response)
+        );
     }
 
     /**
      * RESOLVE USER BY ID, EMAIL, OR PHONE
      */
+    // No IDOR check here because we NEED to look up people we don't own to pay them.
+    // The @PreAuthorize at the top ensures only logged-in users can use this tool.
     @GetMapping("/lookup")
     public ResponseEntity<ApiResponse<Long>> lookupUser(@RequestParam String identifier) {
 

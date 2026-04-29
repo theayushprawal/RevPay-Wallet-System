@@ -7,6 +7,7 @@ import com.revpay.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.revpay.model.Transaction;
@@ -14,6 +15,7 @@ import com.revpay.service.TransactionService;
 
 @RestController
 @RequestMapping("/transactions")
+@PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS')") // Default blanket protection
 public class TransactionController {
 
     private final TransactionService transactionService;
@@ -25,6 +27,7 @@ public class TransactionController {
     /**
      * SEND MONEY
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #senderId)")
     @PostMapping("/send")
     public ResponseEntity<ApiResponse<Void>> sendMoney(
             @RequestParam Long senderId,
@@ -33,75 +36,48 @@ public class TransactionController {
             @RequestParam String transactionPin,
             @RequestParam(required = false) String remarks) {
 
-        transactionService.sendMoney(
-                senderId,
-                receiverId,
-                amount,
-                transactionPin,
-                remarks
-        );
+        transactionService.sendMoney(senderId, receiverId, amount, transactionPin, remarks);
 
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Money sent successfully",
-                        null
-                )
-        );
+        return ResponseEntity.ok(new ApiResponse<>(true, "Money sent successfully", null));
     }
 
     /**
      * TRANSACTION HISTORY
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #userId)")
     @GetMapping("/history/{userId}")
     public ResponseEntity<ApiResponse<List<Transaction>>> getTransactionHistory(
             @PathVariable Long userId) {
 
-        List<Transaction> transactions =
-                transactionService.getTransactionsForUser(userId);
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Transaction history fetched successfully",
-                        transactions
-                )
-        );
+        List<Transaction> transactions = transactionService.getTransactionsForUser(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Transaction history fetched successfully", transactions));
     }
 
     /**
      * FILTER + PAGINATED HISTORY
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #request.userId)")
     @PostMapping("/filter/paged")
     public ResponseEntity<ApiResponse<Page<Transaction>>> filterTransactionsPaged(
             @Valid @RequestBody TransactionFilterRequest request,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<Transaction> result =
-                transactionService.filterTransactionsPaged(request, page, size);
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Filtered transactions fetched successfully",
-                        result
-                )
-        );
+        Page<Transaction> result = transactionService.filterTransactionsPaged(request, page, size);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Filtered transactions fetched successfully", result));
     }
 
     /**
      * EXPORT TRANSACTIONS (CSV)
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #userId)")
     @GetMapping("/export/csv")
-    public ResponseEntity<byte[]> exportTransactionsCsv(
-            @RequestParam Long userId) {
+    public ResponseEntity<byte[]> exportTransactionsCsv(@RequestParam Long userId) {
 
         byte[] csvData = transactionService.exportTransactionsToCsv(userId);
 
         return ResponseEntity.ok()
-                .header("Content-Disposition",
-                        "attachment; filename=transactions.csv")
+                .header("Content-Disposition", "attachment; filename=transactions.csv")
                 .header("Content-Type", "text/csv")
                 .body(csvData);
     }
@@ -109,57 +85,36 @@ public class TransactionController {
     /**
      * TRANSACTION SUMMARY
      */
+    @PreAuthorize("hasAnyAuthority('PERSONAL', 'BUSINESS') and @securityGuard.isUserMatching(authentication, #userId)")
     @GetMapping("/summary/{userId}")
     public ResponseEntity<ApiResponse<TransactionSummaryResponse>> getTransactionSummary(
             @PathVariable Long userId) {
 
-        TransactionSummaryResponse summary =
-                transactionService.getTransactionSummary(userId);
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Transaction summary fetched successfully",
-                        summary
-                )
-        );
+        TransactionSummaryResponse summary = transactionService.getTransactionSummary(userId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Transaction summary fetched successfully", summary));
     }
 
     /**
      * TOP CUSTOMERS ANALYTICS
      */
+    @PreAuthorize("hasAuthority('BUSINESS') and @securityGuard.isUserMatching(authentication, #businessId)")
     @GetMapping("/top-customers/{businessId}")
     public ResponseEntity<ApiResponse<List<TopCustomerResponse>>> getTopCustomers(
             @PathVariable Long businessId) {
 
-        List<TopCustomerResponse> customers =
-                transactionService.getTopCustomers(businessId);
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Top customers fetched successfully",
-                        customers
-                )
-        );
+        List<TopCustomerResponse> customers = transactionService.getTopCustomers(businessId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Top customers fetched successfully", customers));
     }
 
     /**
      * REVENUE REPORT
      */
+    @PreAuthorize("hasAuthority('BUSINESS') and @securityGuard.isUserMatching(authentication, #businessId)")
     @GetMapping("/revenue-report/{businessId}")
     public ResponseEntity<ApiResponse<RevenueReportResponse>> getRevenueReport(
             @PathVariable Long businessId) {
 
-        RevenueReportResponse report =
-                transactionService.getRevenueReport(businessId);
-
-        return ResponseEntity.ok(
-                new ApiResponse<>(
-                        true,
-                        "Revenue report fetched successfully",
-                        report
-                )
-        );
+        RevenueReportResponse report = transactionService.getRevenueReport(businessId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Revenue report fetched successfully", report));
     }
 }

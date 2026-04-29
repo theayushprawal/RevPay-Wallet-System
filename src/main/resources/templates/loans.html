@@ -114,8 +114,9 @@
     });
 
     function checkEligibility() {
-        fetch(`/users/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/users/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
                 const user = data.data || data;
                 if (user.userType === 'BUSINESS') {
@@ -125,19 +126,20 @@
                 } else {
                     document.getElementById('notEligible').classList.remove('d-none');
                 }
+            })
+            .catch(err => {
+                if(err.message !== "Unauthorized") console.error("Error checking eligibility:", err);
             });
     }
 
     function loadLoans() {
         const tbody = document.getElementById('loanTableBody');
 
-        fetch(`/loans/business/${userId}`)
-            .then(res => res.json())
+        // ADDED HEADERS
+        fetch(`/loans/business/${userId}`, { headers: getAuthHeaders() })
+            .then(handleSecureResponse)
             .then(data => {
-                console.log("Loan Data Received:", data); // Debugging: Check your browser console (F12)
                 tbody.innerHTML = '';
-
-                // Handle both wrapped (ApiResponse) and unwrapped JSON
                 const loans = data.data || data;
 
                 if (!loans || loans.length === 0) {
@@ -145,38 +147,27 @@
                     return;
                 }
 
-                // Added index to loop for sequential numbering
                 loans.forEach((loan, index) => {
-                    // 1. Determine Status Badge Style
                     let badge = 'bg-secondary';
                     if(loan.status === 'APPROVED') badge = 'bg-info';
                     if(loan.status === 'DISBURSED') badge = 'bg-success';
                     if(loan.status === 'CLOSED') badge = 'bg-dark';
                     if(loan.status === 'REJECTED') badge = 'bg-danger';
 
-                    // 2. Calculate Repayment Progress
-                    // Calculate Total Payable (EMI * Months) and Remaining Balance
                     const emiAmount = loan.emi || 0;
                     const totalPayable = emiAmount * loan.tenureMonths;
-                    // We sum up the 'emi' values from the repayments list sent by the backend
                     const totalPaid = loan.repayments ? loan.repayments.reduce((sum, r) => sum + r.emi, 0) : 0;
                     const remaining = totalPayable - totalPaid;
 
-                    // 3. Determine which Action Button to show
                     let actionBtn = '';
                     if(loan.status === 'APPROVED') {
-                        // Approved but not claimed yet
                         actionBtn = `<button class="btn btn-sm btn-primary fw-bold" onclick="disburseLoan(${loan.loanId})">Claim Funds</button>`;
                     } else if(loan.status === 'DISBURSED') {
-                        // Active loan, allow repayment
-                        // Pass the emiAmount to the modal function
                         actionBtn = `<button class="btn btn-sm btn-outline-success fw-bold" onclick="openRepayModal(${loan.loanId}, ${emiAmount})">Pay EMI</button>`;
                     } else {
-                        // Closed or Rejected
                         actionBtn = `<span class="text-muted small">No Actions</span>`;
                     }
 
-                    // 4. Create and append the Row
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td class="ps-4 fw-bold text-muted">#${index + 1}</td>
@@ -195,8 +186,10 @@
                 });
             })
             .catch(err => {
-                console.error("Error loading loans:", err);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Failed to load loan data from server.</td></tr>';
+                if(err.message !== "Unauthorized") {
+                    console.error("Error loading loans:", err);
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-danger">Failed to load loan data from server.</td></tr>';
+                }
             });
     }
 
@@ -211,48 +204,65 @@
             purpose: document.getElementById('loanPurpose').value,
             documentName: document.getElementById('loanDocument').value
         };
+
         btn.disabled = true; btn.textContent = 'Processing...';
+
+        // ADDED HEADERS FOR POST
         fetch('/loans/apply', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
-        }).then(res => res.json()).then(data => {
+        })
+        .then(handleSecureResponse)
+        .then(data => {
             btn.disabled = false; btn.textContent = 'Apply Now';
             if(data.success) {
-                alertBox.className = "alert alert-success"; alertBox.textContent = "Application submitted! Check history."; alertBox.classList.remove('d-none');
+                alertBox.className = "alert alert-success";
+                alertBox.textContent = "Application submitted! Check history.";
+                alertBox.classList.remove('d-none');
                 document.getElementById('applyLoanForm').reset();
                 loadLoans();
             } else {
-                alertBox.className = "alert alert-danger"; alertBox.textContent = data.message; alertBox.classList.remove('d-none');
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = data.message;
+                alertBox.classList.remove('d-none');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false; btn.textContent = 'Apply Now';
+            if(err.message !== "Unauthorized") {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = "Server error.";
+                alertBox.classList.remove('d-none');
             }
         });
     });
 
-    // FIXED: Swapped confirm() for revPayConfirm()
     function disburseLoan(id) {
         revPayConfirm("Claim funds and add to your wallet?").then((confirmed) => {
             if(confirmed) {
-                fetch(`/loans/${id}/disburse`, { method: 'POST' })
-                    .then(res => res.json()).then(data => {
+                // ADDED HEADERS FOR DISBURSE
+                fetch(`/loans/${id}/disburse`, { method: 'POST', headers: getAuthHeaders() })
+                    .then(handleSecureResponse)
+                    .then(data => {
                         if(data.success) {
                             alert("Funds credited successfully!");
                             loadLoans();
                         } else alert(data.message);
-                    });
+                    })
+                    .catch(err => { if(err.message !== "Unauthorized") console.error(err); });
             }
         });
     }
 
-    // Accept emiAmount as a parameter and pre-fill the input field
     function openRepayModal(id, emiAmount) {
         document.getElementById('repayLoanId').value = id;
-        document.getElementById('repayAmount').value = emiAmount.toFixed(2); // Pre-fill EMI amount
+        document.getElementById('repayAmount').value = emiAmount.toFixed(2);
         document.getElementById('repayAlert').classList.add('d-none');
         document.getElementById('repayPin').value = '';
         new bootstrap.Modal(document.getElementById('repayModal')).show();
     }
 
-    // FIXED: Form submission now passes the PIN in the payload and handles errors smoothly
     document.getElementById('repayForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const btn = document.getElementById('repayBtn');
@@ -269,11 +279,14 @@
             transactionPin: document.getElementById('repayPin').value
         };
 
+        // ADDED HEADERS FOR POST
         fetch('/loans/repay', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload)
-        }).then(res => res.json()).then(data => {
+        })
+        .then(handleSecureResponse)
+        .then(data => {
             btn.disabled = false;
             btn.textContent = 'Confirm Repayment';
             if(data.success) {
@@ -289,9 +302,11 @@
         }).catch(err => {
             btn.disabled = false;
             btn.textContent = 'Confirm Repayment';
-            alertBox.className = 'alert alert-danger';
-            alertBox.textContent = "Server error.";
-            alertBox.classList.remove('d-none');
+            if (err.message !== "Unauthorized") {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = "Server error.";
+                alertBox.classList.remove('d-none');
+            }
         });
     });
 </script>

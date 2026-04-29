@@ -91,6 +91,15 @@
 
 <script>
     // ==========================================
+    // NEW: Auto-Redirect if already logged in
+    // ==========================================
+    document.addEventListener("DOMContentLoaded", function() {
+        if (localStorage.getItem('jwt_token') && localStorage.getItem('userId')) {
+            window.location.replace('/dashboard');
+        }
+    });
+
+    // ==========================================
     // Real-time Password Strength Checker
     // ==========================================
     function setupPasswordValidation(inputId, helpId) {
@@ -136,8 +145,13 @@
         .then(data => {
             btn.disabled = false; btn.textContent = 'Sign In';
             if (data.success) {
-                localStorage.setItem('userId', data.data); // data.data contains the userId
-                window.location.href = '/dashboard';
+                // --- UPDATED JWT LOGIC HERE ---
+                localStorage.setItem('jwt_token', data.data.token);
+                localStorage.setItem('userId', data.data.userId);
+                localStorage.setItem('userType', data.data.userType);
+
+                // Use replace() to prevent back-button navigation to login
+                window.location.replace('/dashboard');
             } else {
                 alertBox.className = 'alert alert-danger';
                 alertBox.textContent = data.message || "Invalid credentials.";
