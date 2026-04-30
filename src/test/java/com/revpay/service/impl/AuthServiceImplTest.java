@@ -1,5 +1,7 @@
 package com.revpay.service.impl;
 
+import com.revpay.config.JwtUtil;
+import com.revpay.dto.AuthResponse;
 import com.revpay.dto.RegisterRequest;
 import com.revpay.dto.SecurityQuestionRequest;
 import com.revpay.model.*;
@@ -41,6 +43,9 @@ class AuthServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private JwtUtil jwtUtil; // NEW: Mock the JwtUtil dependency
+
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -71,6 +76,7 @@ class AuthServiceImplTest {
         user.setTransactionPinHash("encodedPin");
         user.setIsLocked(YesNoStatus.NO);
         user.setFailedAttempts(0);
+        user.setUserType(UserType.PERSONAL); // NEW: Added so jwtUtil doesn't throw NPE on .name()
     }
 
     @Test
@@ -109,9 +115,18 @@ class AuthServiceImplTest {
         when(passwordEncoder.matches(anyString(), anyString()))
                 .thenReturn(true);
 
-        User result = authService.login("test@mail.com", "password");
+        // NEW: Mock the JwtUtil behavior (takes email, userId, and role)
+        when(jwtUtil.generateToken(anyString(), anyLong(), anyString()))
+                .thenReturn("mocked-jwt-token");
+
+        // NEW: Expect AuthResponse instead of User
+        AuthResponse result = authService.login("test@mail.com", "password");
 
         assertNotNull(result);
+        assertEquals("mocked-jwt-token", result.getToken());
+        assertEquals(1L, result.getUserId());
+        assertEquals("PERSONAL", result.getUserType());
+
         verify(userRepository).save(any(User.class));
     }
 
