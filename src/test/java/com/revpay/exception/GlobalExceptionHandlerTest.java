@@ -59,7 +59,7 @@ class GlobalExceptionHandlerTest {
                 new IllegalArgumentException("Invalid input");
 
         ResponseEntity<ApiError> response =
-                handler.handleIllegalArgumentException(ex);
+                handler.handleIllegalArgument(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Invalid Request", response.getBody().getError());
@@ -74,7 +74,7 @@ class GlobalExceptionHandlerTest {
                 new IllegalStateException("Operation not allowed");
 
         ResponseEntity<ApiError> response =
-                handler.handleIllegalStateException(ex);
+                handler.handleIllegalState(ex);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("Operation Not Allowed", response.getBody().getError());
@@ -92,6 +92,6 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("Server Error", response.getBody().getError());
-        assertEquals("Server failure", response.getBody().getMessage());
+        assertEquals("An unexpected error occurred. Please contact support.", response.getBody().getMessage());
     }
 }
