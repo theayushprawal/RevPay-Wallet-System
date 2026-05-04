@@ -1,4 +1,4 @@
-package com.revpay.dto;
+package com.revpay.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

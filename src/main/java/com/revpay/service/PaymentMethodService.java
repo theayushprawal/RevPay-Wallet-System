@@ -2,8 +2,8 @@ package com.revpay.service;
 
 import java.util.List;
 
-import com.revpay.dto.AddPaymentMethodRequest;
-import com.revpay.dto.UpdatePaymentMethodRequest;
+import com.revpay.dto.request.AddPaymentMethodRequest;
+import com.revpay.dto.request.UpdatePaymentMethodRequest;
 import com.revpay.model.PaymentMethod;
 
 public interface PaymentMethodService {

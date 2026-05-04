@@ -1,7 +1,7 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.CreateInvoiceRequest;
-import com.revpay.dto.InvoiceItemRequest;
+import com.revpay.dto.request.CreateInvoiceRequest;
+import com.revpay.dto.request.InvoiceItemRequest;
 import com.revpay.model.Invoice;
 import com.revpay.model.User;
 import com.revpay.model.enums.InvoiceStatus;
@@ -26,7 +26,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
 
 class InvoiceServiceImplTest {
 

@@ -3,14 +3,14 @@ package com.revpay.service.impl;
 import java.time.LocalDate;
 import java.util.List;
 
-import com.revpay.dto.UpdatePaymentMethodRequest;
+import com.revpay.dto.request.UpdatePaymentMethodRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.revpay.dto.AddPaymentMethodRequest;
+import com.revpay.dto.request.AddPaymentMethodRequest;
 import com.revpay.model.PaymentMethod;
 import com.revpay.model.User;
 import com.revpay.model.enums.PaymentMethodType;

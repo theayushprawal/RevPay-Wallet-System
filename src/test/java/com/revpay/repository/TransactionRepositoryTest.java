@@ -1,6 +1,6 @@
 package com.revpay.repository;
 
-import com.revpay.dto.TopCustomerResponse;
+import com.revpay.dto.response.TopCustomerResponse;
 import com.revpay.model.Transaction;
 import com.revpay.model.User;
 import com.revpay.model.enums.*;

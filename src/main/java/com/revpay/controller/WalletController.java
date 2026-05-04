@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.revpay.dto.ApiResponse;
+import com.revpay.dto.response.ApiResponse;
 import com.revpay.service.WalletService;
 
 @RestController

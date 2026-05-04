@@ -1,4 +1,4 @@
-package com.revpay.dto;
+package com.revpay.dto.response;
 
 import java.math.BigDecimal;
 

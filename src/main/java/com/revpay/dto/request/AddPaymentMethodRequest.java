@@ -1,4 +1,4 @@
-package com.revpay.dto;
+package com.revpay.dto.request;
 
 import java.time.LocalDate;
 

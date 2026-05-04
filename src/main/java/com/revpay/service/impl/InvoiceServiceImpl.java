@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.revpay.dto.InvoiceItemRequest;
-import com.revpay.dto.InvoiceSummaryResponse;
+import com.revpay.dto.request.InvoiceItemRequest;
+import com.revpay.dto.response.InvoiceSummaryResponse;
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.UserType;
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.revpay.dto.CreateInvoiceRequest;
+import com.revpay.dto.request.CreateInvoiceRequest;
 import com.revpay.model.Invoice;
 import com.revpay.model.InvoiceItem;
 import com.revpay.model.User;

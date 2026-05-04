@@ -2,8 +2,8 @@ package com.revpay.controller;
 
 import java.util.List;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.NotificationPreferenceRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.NotificationPreferenceRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

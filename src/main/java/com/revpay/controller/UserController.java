@@ -1,6 +1,6 @@
 package com.revpay.controller;
 
-import com.revpay.dto.UserResponse;
+import com.revpay.dto.response.UserResponse;
 import com.revpay.model.User;
 import com.revpay.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.UpdateProfileRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.UpdateProfileRequest;
 import com.revpay.service.UserService;
 
 import java.util.Optional;

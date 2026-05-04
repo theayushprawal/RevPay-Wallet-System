@@ -1,8 +1,8 @@
 package com.revpay.service;
 
-import com.revpay.dto.AuthResponse;
+import com.revpay.dto.response.AuthResponse;
 import com.revpay.model.User;
-import com.revpay.dto.RegisterRequest;
+import com.revpay.dto.request.RegisterRequest;
 
 public interface AuthService {
 

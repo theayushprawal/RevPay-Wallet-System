@@ -1,8 +1,8 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.CreateInvoiceRequest;
-import com.revpay.dto.InvoiceSummaryResponse;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.CreateInvoiceRequest;
+import com.revpay.dto.response.InvoiceSummaryResponse;
 import com.revpay.model.Invoice;
 import com.revpay.service.InvoiceService;
 

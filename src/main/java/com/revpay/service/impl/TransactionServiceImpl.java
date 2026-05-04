@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.revpay.dto.RevenueReportResponse;
-import com.revpay.dto.TopCustomerResponse;
-import com.revpay.dto.TransactionFilterRequest;
-import com.revpay.dto.TransactionSummaryResponse;
+import com.revpay.dto.response.RevenueReportResponse;
+import com.revpay.dto.response.TopCustomerResponse;
+import com.revpay.dto.request.TransactionFilterRequest;
+import com.revpay.dto.response.TransactionSummaryResponse;
 import com.revpay.model.User;
 import com.revpay.model.Wallet;
 import com.revpay.model.enums.TransactionStatus;

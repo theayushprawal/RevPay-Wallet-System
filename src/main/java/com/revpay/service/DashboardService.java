@@ -1,6 +1,6 @@
 package com.revpay.service;
 
-import com.revpay.dto.DashboardSummaryResponse;
+import com.revpay.dto.response.DashboardSummaryResponse;
 
 public interface DashboardService {
 

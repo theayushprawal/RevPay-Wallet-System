@@ -1,11 +1,10 @@
 package com.revpay.service.impl;
 
 import com.revpay.config.JwtUtil;
-import com.revpay.dto.AuthResponse;
-import com.revpay.dto.RegisterRequest;
-import com.revpay.dto.SecurityQuestionRequest;
+import com.revpay.dto.response.AuthResponse;
+import com.revpay.dto.request.RegisterRequest;
+import com.revpay.dto.request.SecurityQuestionRequest;
 import com.revpay.model.*;
-import com.revpay.model.enums.UserStatus;
 import com.revpay.model.enums.UserType;
 import com.revpay.model.enums.YesNoStatus;
 import com.revpay.repository.*;

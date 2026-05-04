@@ -1,7 +1,7 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.AddPaymentMethodRequest;
-import com.revpay.dto.UpdatePaymentMethodRequest;
+import com.revpay.dto.request.AddPaymentMethodRequest;
+import com.revpay.dto.request.UpdatePaymentMethodRequest;
 import com.revpay.model.PaymentMethod;
 import com.revpay.model.User;
 import com.revpay.model.enums.PaymentMethodType;

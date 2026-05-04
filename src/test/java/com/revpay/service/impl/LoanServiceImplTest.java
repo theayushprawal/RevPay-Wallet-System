@@ -1,7 +1,7 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.ApplyLoanRequest;
-import com.revpay.dto.RepayLoanRequest;
+import com.revpay.dto.request.ApplyLoanRequest;
+import com.revpay.dto.request.RepayLoanRequest;
 import com.revpay.model.*;
 import com.revpay.model.enums.*;
 import com.revpay.repository.*;
@@ -17,13 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class LoanServiceImplTest {

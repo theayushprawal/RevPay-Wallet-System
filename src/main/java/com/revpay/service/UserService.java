@@ -1,7 +1,7 @@
 package com.revpay.service;
 
-import com.revpay.dto.UpdateProfileRequest;
-import com.revpay.dto.UserResponse;
+import com.revpay.dto.request.UpdateProfileRequest;
+import com.revpay.dto.response.UserResponse;
 import com.revpay.model.User;
 
 public interface UserService {

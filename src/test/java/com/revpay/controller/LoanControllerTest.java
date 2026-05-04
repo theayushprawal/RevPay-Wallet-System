@@ -1,8 +1,8 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.ApplyLoanRequest;
-import com.revpay.dto.RepayLoanRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.ApplyLoanRequest;
+import com.revpay.dto.request.RepayLoanRequest;
 import com.revpay.model.Loan;
 import com.revpay.service.LoanService;
 

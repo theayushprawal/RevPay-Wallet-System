@@ -1,8 +1,8 @@
 package com.revpay.service.impl;
 
 import com.revpay.config.JwtUtil;
-import com.revpay.dto.AuthResponse;
-import com.revpay.dto.SecurityQuestionRequest;
+import com.revpay.dto.response.AuthResponse;
+import com.revpay.dto.request.SecurityQuestionRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,7 +12,7 @@ import com.revpay.model.User;
 import com.revpay.repository.UserRepository;
 import com.revpay.repository.WalletRepository;
 import com.revpay.service.AuthService;
-import com.revpay.dto.RegisterRequest;
+import com.revpay.dto.request.RegisterRequest;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;

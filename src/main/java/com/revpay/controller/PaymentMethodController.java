@@ -2,14 +2,14 @@ package com.revpay.controller;
 
 import java.util.List;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.UpdatePaymentMethodRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.UpdatePaymentMethodRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.revpay.dto.AddPaymentMethodRequest;
+import com.revpay.dto.request.AddPaymentMethodRequest;
 import com.revpay.model.PaymentMethod;
 import com.revpay.service.PaymentMethodService;
 

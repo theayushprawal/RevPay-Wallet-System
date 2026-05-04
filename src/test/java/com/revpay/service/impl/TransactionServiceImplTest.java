@@ -1,10 +1,9 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.TransactionSummaryResponse;
+import com.revpay.dto.response.TransactionSummaryResponse;
 import com.revpay.model.Transaction;
 import com.revpay.model.User;
 import com.revpay.model.Wallet;
-import com.revpay.model.enums.UserType;
 import com.revpay.repository.TransactionRepository;
 import com.revpay.repository.UserRepository;
 import com.revpay.repository.WalletRepository;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;

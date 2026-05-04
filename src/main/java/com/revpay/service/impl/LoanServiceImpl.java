@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode; // Added for decimal math
 import java.time.LocalDateTime;
 
-import com.revpay.dto.RepayLoanRequest;
+import com.revpay.dto.request.RepayLoanRequest;
 import com.revpay.model.*;
 import com.revpay.model.enums.*;
 import com.revpay.repository.*;
@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.revpay.dto.ApplyLoanRequest;
+import com.revpay.dto.request.ApplyLoanRequest;
 import com.revpay.service.LoanService;
 
 @Service

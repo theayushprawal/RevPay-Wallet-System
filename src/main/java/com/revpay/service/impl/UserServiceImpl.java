@@ -1,12 +1,12 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.UserResponse;
+import com.revpay.dto.response.UserResponse;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import com.revpay.dto.UpdateProfileRequest;
+import com.revpay.dto.request.UpdateProfileRequest;
 import com.revpay.model.BusinessProfile;
 import com.revpay.model.User;
 import com.revpay.model.enums.UserType;

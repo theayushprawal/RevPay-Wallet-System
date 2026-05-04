@@ -1,6 +1,6 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
+import com.revpay.dto.response.ApiResponse;
 import com.revpay.service.WalletService;
 
 import org.junit.jupiter.api.BeforeEach;

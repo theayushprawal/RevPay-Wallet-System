@@ -1,7 +1,7 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.AuthResponse;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.response.AuthResponse;
 import com.revpay.model.SecurityQuestion;
 import com.revpay.repository.SecurityQuestionRepository;
 import jakarta.validation.Valid;
@@ -11,7 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.revpay.dto.RegisterRequest;
+import com.revpay.dto.request.RegisterRequest;
 import com.revpay.model.User;
 import com.revpay.service.AuthService;
 import com.revpay.repository.UserRepository;

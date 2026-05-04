@@ -1,7 +1,7 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.UpdateProfileRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.UpdateProfileRequest;
 import com.revpay.service.UserService;
 
 import org.junit.jupiter.api.BeforeEach;

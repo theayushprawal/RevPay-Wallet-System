@@ -1,6 +1,6 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.DashboardSummaryResponse;
+import com.revpay.dto.response.DashboardSummaryResponse;
 import com.revpay.model.*;
 import com.revpay.model.enums.RequestStatus;
 import com.revpay.model.enums.YesNoStatus;

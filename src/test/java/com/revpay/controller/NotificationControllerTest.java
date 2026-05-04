@@ -1,7 +1,7 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.NotificationPreferenceRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.NotificationPreferenceRequest;
 import com.revpay.model.Notification;
 import com.revpay.model.NotificationPreference;
 import com.revpay.service.NotificationService;

@@ -8,7 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 
-import com.revpay.dto.DashboardSummaryResponse;
+import com.revpay.dto.response.DashboardSummaryResponse;
 import com.revpay.model.MoneyRequest;
 import com.revpay.model.Transaction;
 import com.revpay.model.User;

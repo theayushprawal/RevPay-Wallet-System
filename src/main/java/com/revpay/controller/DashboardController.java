@@ -5,8 +5,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.DashboardSummaryResponse;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.response.DashboardSummaryResponse;
 import com.revpay.service.DashboardService;
 import com.revpay.model.User;
 import com.revpay.repository.UserRepository;

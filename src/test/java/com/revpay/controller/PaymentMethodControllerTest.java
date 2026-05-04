@@ -1,8 +1,8 @@
 package com.revpay.controller;
 
-import com.revpay.dto.ApiResponse;
-import com.revpay.dto.AddPaymentMethodRequest;
-import com.revpay.dto.UpdatePaymentMethodRequest;
+import com.revpay.dto.response.ApiResponse;
+import com.revpay.dto.request.AddPaymentMethodRequest;
+import com.revpay.dto.request.UpdatePaymentMethodRequest;
 import com.revpay.model.PaymentMethod;
 import com.revpay.service.PaymentMethodService;
 

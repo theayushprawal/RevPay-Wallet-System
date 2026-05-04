@@ -1,6 +1,6 @@
 package com.revpay.service.impl;
 
-import com.revpay.dto.UpdateProfileRequest;
+import com.revpay.dto.request.UpdateProfileRequest;
 import com.revpay.model.BusinessProfile;
 import com.revpay.model.User;
 import com.revpay.model.enums.UserType;

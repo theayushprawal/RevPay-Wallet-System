@@ -2,8 +2,8 @@ package com.revpay.service;
 
 import java.util.List;
 
-import com.revpay.dto.CreateInvoiceRequest;
-import com.revpay.dto.InvoiceSummaryResponse;
+import com.revpay.dto.request.CreateInvoiceRequest;
+import com.revpay.dto.response.InvoiceSummaryResponse;
 import com.revpay.model.Invoice;
 
 public interface InvoiceService {

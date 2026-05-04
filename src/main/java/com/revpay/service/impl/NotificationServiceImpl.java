@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.revpay.dto.NotificationPreferenceRequest;
+import com.revpay.dto.request.NotificationPreferenceRequest;
 import com.revpay.model.NotificationPreference;
 import com.revpay.repository.NotificationPreferenceRepository;
 

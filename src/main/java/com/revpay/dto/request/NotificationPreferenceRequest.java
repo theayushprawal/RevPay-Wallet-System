@@ -1,4 +1,4 @@
-package com.revpay.dto;
+package com.revpay.dto.request;
 
 import com.revpay.model.enums.NotificationType;
 import com.revpay.model.enums.YesNoStatus;
