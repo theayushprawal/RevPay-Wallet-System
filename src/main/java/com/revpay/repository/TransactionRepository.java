@@ -113,7 +113,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // for top customer analytics
     @Query("""
-    SELECT new com.revpay.dto.TopCustomerResponse(
+    SELECT new com.revpay.dto.response.TopCustomerResponse(
     t.sender.userId,
     t.sender.fullName,
     COUNT(t),
